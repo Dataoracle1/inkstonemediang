@@ -47,10 +47,10 @@ const Footer = () => {
       { name: 'Technology', path: '/?category=Technology' },
     ],
     'Follow Us': [
-      { name: 'Facebook', icon: Facebook },
-      { name: 'Twitter', icon: Twitter },
-      { name: 'Instagram', icon: Instagram },
-      { name: 'YouTube', icon: Youtube },
+      { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/inkstonemedia' },
+      { name: 'Twitter', icon: Twitter, url: 'https://twitter.com/inkstonemedia' },
+      { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/inkstonemedia' },
+      { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@inkstonemedia' },
     ]
   };
 
@@ -74,13 +74,14 @@ const Footer = () => {
                 Your trusted source for breaking news, sports updates, and entertainment stories from around the world.
               </p>
               <div className="flex space-x-3">
-                {footerLinks['Follow Us'].map(({ name, icon: Icon }) => (
+                {footerLinks['Follow Us'].map(({ name, icon: Icon, url }) => (
                   <a
                     key={name}
-                    href="#"
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 bg-dark-800 hover:bg-primary-500 rounded-full flex items-center justify-center transition"
                     aria-label={name}
-                    onClick={(e) => e.preventDefault()}
                   >
                     <Icon size={18} />
                   </a>
