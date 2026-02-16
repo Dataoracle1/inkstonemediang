@@ -1,6 +1,5 @@
 
-
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Sun, Moon, User, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +8,11 @@ import { newsletterAPI } from '../utils/api';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
@@ -20,9 +23,28 @@ const Navbar = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
+  
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   const toggleDarkMode = useCallback(() => {
-    setIsDark(prev => !prev);
-    document.documentElement.classList.toggle('dark');
+    setIsDark(prev => {
+      const newValue = !prev;
+      
+      localStorage.setItem('darkMode', newValue.toString());
+     
+      if (newValue) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      return newValue;
+    });
   }, []);
 
   const handleSearch = useCallback((e) => {
