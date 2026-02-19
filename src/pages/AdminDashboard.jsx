@@ -3,11 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
-import {
-  Plus, Edit2, Trash2, Eye, Heart, MessageSquare, LogOut, 
-  BarChart3, FileText, Users, Save, X, ExternalLink, Video,
-  UserPlus, Key, Copy, Check, Shield, Mail, User as UserIcon
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Heart, LogOut, BarChart3, FileText, Users, Save, X, ExternalLink, Video, UserPlus, Key, Copy, Check, Shield, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { postsAPI, adminAPI } from '../utils/api';
 import ContactsManagement from '../components/Contactsmanagement';
@@ -17,788 +13,393 @@ import RichTextEditor from '../components/RichTextEditor';
 const AdminDashboard = () => {
   const { admin, logout, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState('posts');
   const [posts, setPosts] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  
   const [admins, setAdmins] = useState([]);
   const [inviteCodes, setInviteCodes] = useState([]);
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
-  const [editingAdmin, setEditingAdmin] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
-
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    excerpt: '',
-    image: '',
-    category: 'Breaking News',
-    videoUrl: '',
-    videoLink: '',
-    tags: '',
-    status: 'published',
-    isFeatured: false,
-    isTrending: false,
+    title: '', content: '', excerpt: '', image: '', category: 'Breaking News',
+    videoUrl: '', videoLink: '', tags: '', status: 'published', isFeatured: false, isTrending: false,
   });
+  const [adminFormData, setAdminFormData] = useState({ name: '', email: '', password: '', role: 'admin' });
+  const [inviteFormData, setInviteFormData] = useState({ role: 'admin', expiresInDays: 7, isSingleUse: true, maxUses: 1, note: '' });
 
-  
-  const [adminFormData, setAdminFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'admin',
-  });
+  // ── Dark mode sync with Navbar ──
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  useEffect(() => {
+    const observer = new MutationObserver(() => setIsDark(document.documentElement.classList.contains('dark')));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
-  const [inviteFormData, setInviteFormData] = useState({
-    role: 'admin',
-    expiresInDays: 7,
-    isSingleUse: true,
-    maxUses: 1,
-    note: '',
-  });
+  // ── Color tokens ──
+  const c = {
+    pageBg:      isDark ? '#0f172a' : '#f8fafc',
+    cardBg:      isDark ? '#1e293b' : 'white',
+    cardBorder:  isDark ? '#334155' : '#f3f4f6',
+    headingColor: isDark ? '#f1f5f9' : '#0f1a12',
+    bodyText:    isDark ? '#cbd5e1' : '#374151',
+    mutedText:   isDark ? '#94a3b8' : '#6b7280',
+    inputBg:     isDark ? '#0f172a' : 'white',
+    inputBorder: isDark ? '#334155' : '#e5e7eb',
+    inputColor:  isDark ? '#f1f5f9' : '#111827',
+    formBg:      isDark ? '#0f2820' : '#f0fdf4',
+    formBorder:  isDark ? 'rgba(22,163,74,.3)' : '#dcfce7',
+    tableBorder: isDark ? '#1e293b' : '#f3f4f6',
+    tableHover:  isDark ? '#243447' : '#f9fafb',
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '10px 14px', border: `1.5px solid ${c.inputBorder}`,
+    borderRadius: 10, fontSize: 14, fontFamily: "'DM Sans', sans-serif",
+    outline: 'none', transition: '.2s', background: c.inputBg, color: c.inputColor, boxSizing: 'border-box',
+  };
+  const labelStyle = { display: 'block', fontSize: 13, fontWeight: 700, color: c.bodyText, marginBottom: 6 };
 
   useEffect(() => {
-    fetchPosts();
-    fetchStats();
-    if (isSuperAdmin) {
-      fetchAdmins();
-      fetchInviteCodes();
-    }
+    fetchPosts(); fetchStats();
+    if (isSuperAdmin) { fetchAdmins(); fetchInviteCodes(); }
   }, [isSuperAdmin]);
 
   const fetchPosts = async () => {
-    try {
-      setLoading(true);
-      const response = await postsAPI.getAll({ limit: 100 });
-      setPosts(response.data.data.posts);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      toast.error('Failed to load posts');
-    } finally {
-      setLoading(false);
-    }
+    try { setLoading(true); const r = await postsAPI.getAll({ limit: 100 }); setPosts(r.data.data.posts); }
+    catch { toast.error('Failed to load posts'); } finally { setLoading(false); }
   };
-
   const fetchStats = async () => {
-    try {
-      const response = await postsAPI.getStats();
-      setStats(response.data.data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      toast.error('Failed to load statistics');
-    }
+    try { const r = await postsAPI.getStats(); setStats(r.data.data); } catch { toast.error('Failed to load statistics'); }
   };
-
   const fetchAdmins = async () => {
-    try {
-      const response = await adminAPI.getAll();
-      setAdmins(response.data.data.admins);
-    } catch (error) {
-      console.error('Error fetching admins:', error);
-      toast.error('Failed to load admins');
-    }
+    try { const r = await adminAPI.getAll(); setAdmins(r.data.data.admins); } catch { toast.error('Failed to load admins'); }
   };
-
   const fetchInviteCodes = async () => {
-    try {
-      const response = await adminAPI.getInviteCodes();
-      setInviteCodes(response.data.data.inviteCodes);
-    } catch (error) {
-      console.error('Error fetching invite codes:', error);
-      toast.error('Failed to load invite codes');
-    }
+    try { const r = await adminAPI.getInviteCodes(); setInviteCodes(r.data.data.inviteCodes); } catch { toast.error('Failed to load invite codes'); }
   };
 
- 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
-
- 
-  const handleContentChange = (value) => {
-    setFormData({
-      ...formData,
-      content: value,
-    });
-  };
+  const handleContentChange = (value) => setFormData({ ...formData, content: value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const postData = {
-      ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-    };
-
-    const loadingToast = toast.loading(editingPost ? 'Updating post...' : 'Publishing post...');
-
+    const postData = { ...formData, tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean) };
+    const tid = toast.loading(editingPost ? 'Updating post...' : 'Publishing post...');
     try {
-      if (editingPost) {
-        await postsAPI.update(editingPost._id, postData);
-        toast.success('Post updated successfully!', { id: loadingToast });
-      } else {
-        await postsAPI.create(postData);
-        toast.success('Post published successfully!', { id: loadingToast });
-      }
-      
-      resetForm();
-      fetchPosts();
-      fetchStats();
-    } catch (error) {
-      console.error('Error saving post:', error);
-      toast.error(
-        'Failed to save post: ' + (error.response?.data?.message || error.message),
-        { id: loadingToast }
-      );
-    }
+      if (editingPost) await postsAPI.update(editingPost._id, postData);
+      else await postsAPI.create(postData);
+      toast.success(editingPost ? 'Post updated!' : 'Post published!', { id: tid });
+      resetForm(); fetchPosts(); fetchStats();
+    } catch (err) { toast.error('Failed: ' + (err.response?.data?.message || err.message), { id: tid }); }
   };
 
   const handleEdit = (post) => {
     setEditingPost(post);
     setFormData({
-      title: post.title,
-      content: post.content,
-      excerpt: post.excerpt || '',
-      image: post.image,
-      category: post.category,
-      videoUrl: post.videoUrl || '',
-      videoLink: post.videoLink || '',
-      tags: post.tags?.join(', ') || '',
-      status: post.status,
-      isFeatured: post.isFeatured || false,
-      isTrending: post.isTrending || false,
+      title: post.title, content: post.content, excerpt: post.excerpt || '', image: post.image,
+      category: post.category, videoUrl: post.videoUrl || '', videoLink: post.videoLink || '',
+      tags: post.tags?.join(', ') || '', status: post.status,
+      isFeatured: post.isFeatured || false, isTrending: post.isTrending || false,
     });
     setShowForm(true);
     toast.success('Post loaded for editing');
   };
 
-
-const handleDelete = async (id) => {
-  toast(
-    (t) => (
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold">Delete this post?</p>
-        <p className="text-sm text-gray-600">This action cannot be undone.</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(t.id);
-              const loadingToast = toast.loading('Deleting post...');
-              try {
-                await postsAPI.delete(id);
-                toast.success('Post deleted successfully!', { id: loadingToast });
-                fetchPosts();
-                fetchStats();
-              } catch (error) {
-                console.error('Error deleting post:', error);
-                toast.error('Failed to delete post', { id: loadingToast });
-              }
-            }}
-            className="bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600 transition"
-          >
-            Delete
+  // ── Reusable confirm toast (replaces window.confirm) ──
+  const confirmToast = (title, sub, onConfirm, confirmLabel = 'Delete', danger = true) => {
+    toast((t) => (
+      <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
+        <p style={{ fontWeight: 700, margin: '0 0 4px', fontSize: 15, color: '#111' }}>{title}</p>
+        <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 12px' }}>{sub}</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={async () => { toast.dismiss(t.id); await onConfirm(); }}
+            style={{ flex: 1, padding: '8px', background: danger ? '#ef4444' : '#16a34a', color: 'white', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
+            {confirmLabel}
           </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300 transition"
-          >
+          <button onClick={() => toast.dismiss(t.id)}
+            style={{ flex: 1, padding: '8px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
             Cancel
           </button>
         </div>
       </div>
-    ),
-    {
-      duration: Infinity,
-      position: 'top-center',
-      style: {
-        background: '#fff',
-        color: '#333',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      }
-    }
-  );
-};
-
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      content: '',
-      excerpt: '',
-      image: '',
-      category: 'Breaking News',
-      videoUrl: '',
-      videoLink: '',
-      tags: '',
-      status: 'published',
-      isFeatured: false,
-      isTrending: false,
-    });
-    setEditingPost(null);
-    setShowForm(false);
+    ), { duration: Infinity, position: 'top-center', style: { background: 'white', borderRadius: 14, padding: '16px 20px', boxShadow: '0 8px 32px rgba(0,0,0,.18)', minWidth: 260 } });
   };
 
- 
+  const handleDelete = (id) => confirmToast('Delete this post?', 'This action cannot be undone.', async () => {
+    const tid = toast.loading('Deleting...');
+    try { await postsAPI.delete(id); toast.success('Post deleted!', { id: tid }); fetchPosts(); fetchStats(); }
+    catch { toast.error('Failed to delete', { id: tid }); }
+  });
+
+  const handleDeleteAdmin = (adminId) => confirmToast('Delete this admin?', 'Access will be revoked immediately.', async () => {
+    const tid = toast.loading('Deleting...');
+    try { await adminAPI.deleteAdmin(adminId); toast.success('Admin deleted!', { id: tid }); fetchAdmins(); }
+    catch (err) { toast.error(err.response?.data?.message || 'Failed', { id: tid }); }
+  });
+
+  const handleRevokeInvite = (id) => confirmToast('Revoke invite code?', 'It will no longer be usable.', async () => {
+    const tid = toast.loading('Revoking...');
+    try { await adminAPI.revokeInvite(id); toast.success('Invite revoked!', { id: tid }); fetchInviteCodes(); }
+    catch (err) { toast.error(err.response?.data?.message || 'Failed', { id: tid }); }
+  }, 'Revoke');
+
+  const handleLogout = () => confirmToast('Logout?', "You'll need to login again to access the dashboard.", async () => {
+    logout();
+    toast.success('Logged out! 👋');
+    setTimeout(() => navigate('/admin/login'), 500);
+  }, 'Logout', false);
+
+  const resetForm = () => {
+    setFormData({ title: '', content: '', excerpt: '', image: '', category: 'Breaking News', videoUrl: '', videoLink: '', tags: '', status: 'published', isFeatured: false, isTrending: false });
+    setEditingPost(null); setShowForm(false);
+  };
+
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
-    const loadingToast = toast.loading('Creating admin...');
-
+    const tid = toast.loading('Creating admin...');
     try {
       await adminAPI.createAdmin(adminFormData);
-      toast.success('Admin created successfully!', { id: loadingToast });
-      setShowAdminForm(false);
-      setAdminFormData({ name: '', email: '', password: '', role: 'admin' });
-      fetchAdmins();
-    } catch (error) {
-      toast.error(
-        'Error: ' + (error.response?.data?.message || 'Failed to create admin'),
-        { id: loadingToast }
-      );
-    }
+      toast.success('Admin created!', { id: tid });
+      setShowAdminForm(false); setAdminFormData({ name: '', email: '', password: '', role: 'admin' }); fetchAdmins();
+    } catch (err) { toast.error('Error: ' + (err.response?.data?.message || 'Failed'), { id: tid }); }
   };
 
   const handleUpdateAdmin = async (adminId, updates) => {
-    const loadingToast = toast.loading('Updating admin...');
-
-    try {
-      await adminAPI.updateAdmin(adminId, updates);
-      toast.success('Admin updated successfully!', { id: loadingToast });
-      fetchAdmins();
-    } catch (error) {
-      toast.error(
-        'Error: ' + (error.response?.data?.message || 'Failed to update admin'),
-        { id: loadingToast }
-      );
-    }
+    const tid = toast.loading('Updating...');
+    try { await adminAPI.updateAdmin(adminId, updates); toast.success('Updated!', { id: tid }); fetchAdmins(); }
+    catch { toast.error('Failed to update', { id: tid }); }
   };
-
-
-const handleDeleteAdmin = async (adminId) => {
-  toast(
-    (t) => (
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold">Delete this admin?</p>
-        <p className="text-sm text-gray-600">This will revoke their access immediately.</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(t.id);
-              const loadingToast = toast.loading('Deleting admin...');
-              try {
-                await adminAPI.deleteAdmin(adminId);
-                toast.success('Admin deleted successfully!', { id: loadingToast });
-                fetchAdmins();
-              } catch (error) {
-                toast.error(
-                  error.response?.data?.message || 'Failed to delete admin',
-                  { id: loadingToast }
-                );
-              }
-            }}
-            className="bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600 transition"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300 transition"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    ),
-    {
-      duration: Infinity,
-      position: 'top-center',
-      style: {
-        background: '#fff',
-        color: '#333',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      }
-    }
-  );
-};
-
 
   const handleGenerateInvite = async (e) => {
     e.preventDefault();
-    const loadingToast = toast.loading('Generating invite code...');
-
+    const tid = toast.loading('Generating...');
     try {
-      const response = await adminAPI.generateInvite(inviteFormData);
-      toast.success('Invite code generated successfully!', { id: loadingToast });
+      await adminAPI.generateInvite(inviteFormData);
+      toast.success('Invite code generated!', { id: tid });
       setShowInviteForm(false);
-      setInviteFormData({
-        role: 'admin',
-        expiresInDays: 7,
-        isSingleUse: true,
-        maxUses: 1,
-        note: '',
-      });
+      setInviteFormData({ role: 'admin', expiresInDays: 7, isSingleUse: true, maxUses: 1, note: '' });
       fetchInviteCodes();
-    } catch (error) {
-      toast.error(
-        'Error: ' + (error.response?.data?.message || 'Failed to generate invite'),
-        { id: loadingToast }
-      );
-    }
+    } catch (err) { toast.error('Error: ' + (err.response?.data?.message || 'Failed'), { id: tid }); }
   };
 
   const handleCopyInviteLink = (code) => {
-    const link = `${window.location.origin}/admin/signup?code=${code}`;
-    navigator.clipboard.writeText(link);
-    setCopiedCode(code);
-    toast.success('Invite link copied to clipboard!');
+    navigator.clipboard.writeText(`${window.location.origin}/admin/signup?code=${code}`);
+    setCopiedCode(code); toast.success('Link copied!');
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-
-  
-const handleRevokeInvite = async (id) => {
-  toast(
-    (t) => (
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold">Revoke this invite code?</p>
-        <p className="text-sm text-gray-600">It will no longer be usable.</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(t.id);
-              const loadingToast = toast.loading('Revoking invite...');
-              try {
-                await adminAPI.revokeInvite(id);
-                toast.success('Invite code revoked!', { id: loadingToast });
-                fetchInviteCodes();
-              } catch (error) {
-                toast.error(
-                  error.response?.data?.message || 'Failed to revoke invite',
-                  { id: loadingToast }
-                );
-              }
-            }}
-            className="bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600 transition"
-          >
-            Revoke
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300 transition"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    ),
-    {
-      duration: Infinity,
-      position: 'top-center',
-      style: {
-        background: '#fff',
-        color: '#333',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      }
-    }
-  );
-};
-
-
-  
-const handleLogout = () => {
-  toast(
-    (t) => (
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold">Logout?</p>
-        <p className="text-sm text-gray-600">You'll need to login again.</p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              logout();
-              toast.success('Logged out successfully! 👋');
-              setTimeout(() => navigate('/admin/login'), 500);
-            }}
-            className="bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300 transition"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    ),
-    {
-      duration: Infinity,
-      position: 'top-center',
-      style: {
-        background: '#fff',
-        color: '#333',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      }
-    }
-  );
-};
-
-  const categories = [
-    'Breaking News', 'Finance', 'Stock Markets', 'Economy',
-    'Sports', 'Movies', 'Entertainment', 'Technology',
-    'Politics', 'Health', 'World', 'Business', 'Science', 'Other'
-  ];
+  const categories = ['Breaking News', 'Finance', 'Stock Markets', 'Economy', 'Sports', 'Movies', 'Entertainment', 'Technology', 'Politics', 'Health', 'World', 'Business', 'Science', 'Other'];
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
-      case 'super-admin': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'admin': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'editor': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-      case 'moderator': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400';
+      case 'super-admin': return { bg: isDark ? 'rgba(124,58,237,.2)' : '#f3e8ff', color: '#7c3aed' };
+      case 'admin':       return { bg: isDark ? 'rgba(30,64,175,.2)' : '#dbeafe', color: isDark ? '#60a5fa' : '#1e40af' };
+      case 'editor':      return { bg: isDark ? 'rgba(21,128,61,.2)' : '#dcfce7', color: '#15803d' };
+      case 'moderator':   return { bg: isDark ? 'rgba(180,83,9,.2)' : '#fef3c7', color: '#b45309' };
+      default:            return { bg: isDark ? 'rgba(55,65,81,.3)' : '#f3f4f6', color: c.bodyText };
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
-      {/* Toast Container */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#333',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            duration: 4000,
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
+  const actionBtn = (bg, hoverBg, icon, onClick, title) => (
+    <button onClick={onClick} title={title}
+      style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '.2s', flexShrink: 0 }}
+      onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+      onMouseLeave={e => e.currentTarget.style.background = bg}>
+      {icon}
+    </button>
+  );
 
-    
-      <header className="bg-white dark:bg-dark-800 shadow-md sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">I</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-heading font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Welcome, {admin?.name} 
-                  {isSuperAdmin && <span className="ml-2 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded">Super Admin</span>}
-                </p>
-              </div>
+  const tabs = [
+    { id: 'posts',    label: 'All Posts',      icon: FileText },
+    { id: 'contacts', label: 'Messages',        icon: Mail },
+    ...(isSuperAdmin ? [{ id: 'admins', label: 'Manage Admins', icon: Users }] : []),
+  ];
+
+  return (
+    <div style={{ fontFamily: "'DM Sans',sans-serif", background: c.pageBg, minHeight: '100vh', transition: 'background .3s' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap');
+        @keyframes spin   { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+        * { box-sizing: border-box; }
+        .dash-input:focus { border-color: #16a34a !important; box-shadow: 0 0 0 3px rgba(22,163,74,.12) !important; }
+        .dash-tr:hover td { background: ${c.tableHover}; transition: background .15s; }
+        .tabs-row { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        @media (max-width: 600px) {
+          .hide-sm { display: none !important; }
+          .stat-value { font-size: 22px !important; }
+        }
+      `}</style>
+
+      <Toaster position="top-right" toastOptions={{
+        duration: 3000,
+        style: { fontFamily: "'DM Sans', sans-serif", fontWeight: 600 },
+        success: { style: { background: '#333', color: '#fff' }, iconTheme: { primary: '#16a34a', secondary: '#fff' } },
+        error:   { style: { background: '#333', color: '#fff' }, iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+      }} />
+
+      {/* ── Header ── */}
+      <header style={{ background: c.cardBg, boxShadow: isDark ? '0 2px 16px rgba(0,0,0,.3)' : '0 2px 12px rgba(0,0,0,.06)', position: 'sticky', top: 0, zIndex: 100, borderBottom: `1px solid ${c.cardBorder}` }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20, fontWeight: 800, flexShrink: 0, boxShadow: '0 4px 12px rgba(22,163,74,.3)' }}>I</div>
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ fontSize: 17, fontWeight: 800, color: c.headingColor, margin: 0, fontFamily: "'Playfair Display', serif" }}>Admin Dashboard</h1>
+              <p style={{ fontSize: 12, color: c.mutedText, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Welcome, {admin?.name}
+                {isSuperAdmin && <span style={{ marginLeft: 8, fontSize: 10, background: isDark ? 'rgba(124,58,237,.2)' : '#f3e8ff', color: '#7c3aed', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>Super Admin</span>}
+              </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-red-500 transition"
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </button>
           </div>
+          <button onClick={handleLogout}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', background: 'transparent', border: 'none', cursor: 'pointer', color: c.mutedText, fontSize: 14, fontWeight: 600, transition: '.2s', borderRadius: 8, fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = isDark ? 'rgba(239,68,68,.1)' : '#fef2f2'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = c.mutedText; e.currentTarget.style.background = 'transparent'; }}>
+            <LogOut size={17} />
+            <span className="hide-sm">Logout</span>
+          </button>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-       
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px' }}>
+
+        {/* ── Stats Grid ── */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="card p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Posts</p>
-                  <p className="text-3xl font-bold">{stats.totalPosts}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 16, marginBottom: 28, animation: 'fadeUp .4s ease' }}>
+            {[
+              { label: 'Total Posts',  value: stats.totalPosts,                  icon: FileText,  color: '#16a34a', bg: isDark ? 'rgba(22,163,74,.12)'  : '#f0fdf4' },
+              { label: 'Total Views',  value: stats.totalViews?.toLocaleString(), icon: Eye,       color: '#3b82f6', bg: isDark ? 'rgba(59,130,246,.12)' : '#eff6ff' },
+              { label: 'Total Likes',  value: stats.totalLikes?.toLocaleString(), icon: Heart,     color: '#ef4444', bg: isDark ? 'rgba(239,68,68,.12)'  : '#fef2f2' },
+              { label: 'Published',    value: stats.publishedPosts,               icon: BarChart3,  color: '#16a34a', bg: isDark ? 'rgba(22,163,74,.12)'  : '#f0fdf4' },
+            ].map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <div key={i} style={{ background: c.cardBg, borderRadius: 16, padding: '20px 24px', border: `1px solid ${c.cardBorder}`, boxShadow: isDark ? '0 2px 12px rgba(0,0,0,.2)' : '0 2px 12px rgba(0,0,0,.06)', transition: '.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = isDark ? '0 8px 24px rgba(0,0,0,.3)' : '0 8px 24px rgba(0,0,0,.1)'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = isDark ? '0 2px 12px rgba(0,0,0,.2)' : '0 2px 12px rgba(0,0,0,.06)'}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ fontSize: 12, color: c.mutedText, fontWeight: 600, margin: '0 0 6px' }}>{stat.label}</p>
+                      <p className="stat-value" style={{ fontSize: 28, fontWeight: 800, color: c.headingColor, margin: 0, fontFamily: "'Playfair Display',serif" }}>{stat.value}</p>
+                    </div>
+                    <div style={{ width: 48, height: 48, borderRadius: 12, background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={22} color={stat.color} />
+                    </div>
+                  </div>
                 </div>
-                <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
-                  <FileText className="text-primary-500" size={24} />
-                </div>
-              </div>
-            </div>
-
-            <div className="card p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Views</p>
-                  <p className="text-3xl font-bold">{stats.totalViews.toLocaleString()}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <Eye className="text-blue-500" size={24} />
-                </div>
-              </div>
-            </div>
-
-            <div className="card p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Likes</p>
-                  <p className="text-3xl font-bold">{stats.totalLikes.toLocaleString()}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                  <Heart className="text-red-500" size={24} />
-                </div>
-              </div>
-            </div>
-
-            <div className="card p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Published</p>
-                  <p className="text-3xl font-bold">{stats.publishedPosts}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="text-green-500" size={24} />
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         )}
 
-        <div className="card p-6">
-         
-          <div className="flex items-center justify-between mb-6 border-b dark:border-dark-700">
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setActiveTab('posts')}
-                className={`px-4 py-2 rounded-t-lg font-medium transition ${
-                  activeTab === 'posts'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600'
-                }`}
-              >
-                <FileText size={16} className="inline mr-2" />
-                All Posts
-              </button>
-              <button
-                onClick={() => setActiveTab('contacts')}
-                className={`px-4 py-2 rounded-t-lg font-medium transition ${
-                  activeTab === 'contacts'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600'
-                }`}
-              >
-                <Mail size={16} className="inline mr-2" />
-                Messages
-              </button>
-              {isSuperAdmin && (
-                <button
-                  onClick={() => setActiveTab('admins')}
-                  className={`px-4 py-2 rounded-t-lg font-medium transition ${
-                    activeTab === 'admins'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600'
-                  }`}
-                >
-                  <Users size={16} className="inline mr-2" />
-                  Manage Admins
-                </button>
-              )}
+        {/* ── Main Card ── */}
+        <div style={{ background: c.cardBg, borderRadius: 20, padding: '24px', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,.25)' : '0 4px 20px rgba(0,0,0,.07)', border: `1px solid ${c.cardBorder}` }}>
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: `2px solid ${c.tableBorder}`, flexWrap: 'wrap', gap: 10 }}>
+            <div className="tabs-row" style={{ display: 'flex', gap: 6 }}>
+              {tabs.map(tab => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: active ? '#16a34a' : isDark ? '#0f172a' : '#f9fafb', color: active ? 'white' : c.mutedText, border: 'none', borderRadius: '10px 10px 0 0', cursor: 'pointer', fontWeight: 700, fontSize: 13, transition: '.2s', fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap', borderBottom: active ? '3px solid #16a34a' : 'none' }}
+                    onMouseEnter={e => !active && (e.currentTarget.style.background = isDark ? '#1e293b' : '#f3f4f6')}
+                    onMouseLeave={e => !active && (e.currentTarget.style.background = isDark ? '#0f172a' : '#f9fafb')}>
+                    <Icon size={15} />
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
             {activeTab === 'posts' && (
-              <button
-                onClick={() => {
-                  resetForm();
-                  setShowForm(true);
-                }}
-                className="btn-primary flex items-center space-x-2"
-              >
-                <Plus size={20} />
-                <span>Create New Post</span>
+              <button onClick={() => { resetForm(); setShowForm(true); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 700, fontSize: 13, boxShadow: '0 4px 12px rgba(22,163,74,.3)', transition: '.2s', fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                <Plus size={16} /> New Post
               </button>
             )}
           </div>
 
-        
+          {/* ── Posts Tab ── */}
           {activeTab === 'posts' && (
             <div>
-             
               {showForm && (
-                <div className="mb-8 p-6 border-2 border-primary-200 dark:border-primary-800 rounded-lg bg-primary-50/50 dark:bg-primary-900/10">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-heading font-bold">
-                      {editingPost ? 'Edit Post' : 'Create New Post'}
+                <div style={{ marginBottom: 28, padding: 24, border: `2px solid ${c.formBorder}`, borderRadius: 20, background: c.formBg }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <h3 style={{ fontSize: 20, fontWeight: 800, color: c.headingColor, margin: 0, fontFamily: "'Playfair Display',serif" }}>
+                      {editingPost ? '✏️ Edit Post' : '✨ Create New Post'}
                     </h3>
-                    <button onClick={resetForm} className="text-gray-500 hover:text-gray-700">
-                      <X size={24} />
+                    <button onClick={resetForm} style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: isDark ? '#1e293b' : '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: c.mutedText }}>
+                      <X size={18} />
                     </button>
                   </div>
-
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium mb-2">Title *</label>
-                        <input
-                          type="text"
-                          name="title"
-                          value={formData.title}
-                          onChange={handleInputChange}
-                          className="input"
-                          required
-                        />
+                  <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 14 }}>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={labelStyle}>Title *</label>
+                        <input type="text" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Post title..." className="dash-input" style={inputStyle} />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium mb-2">Category *</label>
-                        <select
-                          name="category"
-                          value={formData.category}
-                          onChange={handleInputChange}
-                          className="input"
-                          required
-                        >
-                          {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
+                        <label style={labelStyle}>Category *</label>
+                        <select name="category" value={formData.category} onChange={handleInputChange} required className="dash-input" style={inputStyle}>
+                          {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                         </select>
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium mb-2">Status</label>
-                        <select
-                          name="status"
-                          value={formData.status}
-                          onChange={handleInputChange}
-                          className="input"
-                        >
+                        <label style={labelStyle}>Status</label>
+                        <select name="status" value={formData.status} onChange={handleInputChange} className="dash-input" style={inputStyle}>
                           <option value="published">Published</option>
                           <option value="draft">Draft</option>
                           <option value="archived">Archived</option>
                         </select>
                       </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium mb-2">Image URL *</label>
-                        <input
-                          type="url"
-                          name="image"
-                          value={formData.image}
-                          onChange={handleInputChange}
-                          className="input"
-                          placeholder="https://example.com/image.jpg"
-                          required
-                        />
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={labelStyle}>Image URL *</label>
+                        <input type="url" name="image" value={formData.image} onChange={handleInputChange} required placeholder="https://example.com/image.jpg" className="dash-input" style={inputStyle} />
                       </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium mb-2">Excerpt (Optional)</label>
-                        <textarea
-                          name="excerpt"
-                          value={formData.excerpt}
-                          onChange={handleInputChange}
-                          className="textarea"
-                          rows="2"
-                          placeholder="Short summary (auto-generated if empty)"
-                        />
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={labelStyle}>Excerpt</label>
+                        <textarea name="excerpt" value={formData.excerpt} onChange={handleInputChange} rows={2} placeholder="Short summary (auto-generated if empty)" className="dash-input" style={{ ...inputStyle, resize: 'vertical' }} />
                       </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium mb-2">Content *</label>
-                        <RichTextEditor
-                          value={formData.content}
-                          onChange={handleContentChange}
-                          placeholder="Write your content here..."
-                        />
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={labelStyle}>Content *</label>
+                        <RichTextEditor value={formData.content} onChange={handleContentChange} placeholder="Write your content..." />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium mb-2">
-                          <Video size={16} className="inline mr-1" />
-                          Video URL (YouTube/Vimeo)
-                        </label>
-                        <input
-                          type="url"
-                          name="videoUrl"
-                          value={formData.videoUrl}
-                          onChange={handleInputChange}
-                          className="input"
-                          placeholder="https://youtube.com/watch?v=..."
-                        />
+                        <label style={labelStyle}>Video URL (YouTube/Vimeo)</label>
+                        <input type="url" name="videoUrl" value={formData.videoUrl} onChange={handleInputChange} placeholder="https://youtube.com/..." className="dash-input" style={inputStyle} />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium mb-2">
-                          <ExternalLink size={16} className="inline mr-1" />
-                          Video External Link
-                        </label>
-                        <input
-                          type="url"
-                          name="videoLink"
-                          value={formData.videoLink}
-                          onChange={handleInputChange}
-                          className="input"
-                          placeholder="https://... (for 'Watch Full Video' button)"
-                        />
+                        <label style={labelStyle}>Video External Link</label>
+                        <input type="url" name="videoLink" value={formData.videoLink} onChange={handleInputChange} placeholder="https://..." className="dash-input" style={inputStyle} />
                       </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium mb-2">
-                          Tags (comma-separated)
-                        </label>
-                        <input
-                          type="text"
-                          name="tags"
-                          value={formData.tags}
-                          onChange={handleInputChange}
-                          className="input"
-                          placeholder="finance, stocks, economy"
-                        />
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={labelStyle}>Tags (comma-separated)</label>
+                        <input type="text" name="tags" value={formData.tags} onChange={handleInputChange} placeholder="finance, stocks, economy" className="dash-input" style={inputStyle} />
                       </div>
-
-                      <div className="flex items-center space-x-6">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="isFeatured"
-                            checked={formData.isFeatured}
-                            onChange={handleInputChange}
-                            className="w-5 h-5 text-primary-500 rounded focus:ring-primary-500"
-                          />
-                          <span className="text-sm font-medium">Featured Post</span>
-                        </label>
-
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="isTrending"
-                            checked={formData.isTrending}
-                            onChange={handleInputChange}
-                            className="w-5 h-5 text-primary-500 rounded focus:ring-primary-500"
-                          />
-                          <span className="text-sm font-medium">Trending Post</span>
-                        </label>
+                      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                        {[['isFeatured', 'Featured Post'], ['isTrending', 'Trending Post']].map(([key, lbl]) => (
+                          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: c.bodyText }}>
+                            <input type="checkbox" name={key} checked={formData[key]} onChange={handleInputChange} style={{ width: 18, height: 18, accentColor: '#16a34a', cursor: 'pointer' }} />
+                            {lbl}
+                          </label>
+                        ))}
                       </div>
                     </div>
-
-                    <div className="flex space-x-4">
-                      <button type="submit" className="btn-primary flex items-center space-x-2">
-                        <Save size={20} />
-                        <span>{editingPost ? 'Update Post' : 'Publish Post'}</span>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+                      <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 28px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 12px rgba(22,163,74,.3)', fontFamily: "'DM Sans', sans-serif" }}>
+                        <Save size={17} /> {editingPost ? 'Update Post' : 'Publish Post'}
                       </button>
-                      <button type="button" onClick={resetForm} className="btn-secondary">
+                      <button type="button" onClick={resetForm} style={{ padding: '12px 24px', background: c.inputBg, color: c.bodyText, border: `1.5px solid ${c.inputBorder}`, borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
                         Cancel
                       </button>
                     </div>
@@ -806,85 +407,53 @@ const handleLogout = () => {
                 </div>
               )}
 
-           
               {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+                <div style={{ textAlign: 'center', padding: '64px 0' }}>
+                  <div style={{ width: 44, height: 44, border: '3px solid rgba(22,163,74,.2)', borderTopColor: '#16a34a', borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 12px' }} />
+                  <p style={{ color: c.mutedText, fontSize: 14 }}>Loading posts...</p>
                 </div>
               ) : posts.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 dark:text-gray-400">No posts yet. Create your first post!</p>
+                <div style={{ textAlign: 'center', padding: '64px 24px' }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>📰</div>
+                  <p style={{ fontSize: 15, color: c.mutedText, fontWeight: 600 }}>No posts yet. Create your first post!</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 540 }}>
                     <thead>
-                      <tr className="border-b dark:border-dark-700">
-                        <th className="text-left py-3 px-4 font-semibold">Title</th>
-                        <th className="text-left py-3 px-4 font-semibold">Category</th>
-                        <th className="text-center py-3 px-4 font-semibold">Views</th>
-                        <th className="text-center py-3 px-4 font-semibold">Likes</th>
-                        <th className="text-center py-3 px-4 font-semibold">Status</th>
-                        <th className="text-center py-3 px-4 font-semibold">Actions</th>
+                      <tr style={{ borderBottom: `2px solid ${c.tableBorder}` }}>
+                        {['Title', 'Category', 'Views', 'Likes', 'Status', 'Actions'].map(h => (
+                          <th key={h} style={{ textAlign: h === 'Title' ? 'left' : 'center', padding: '10px 12px', fontSize: 12, fontWeight: 700, color: c.mutedText, textTransform: 'uppercase', letterSpacing: .5 }}>{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {posts.map((post) => (
-                        <tr key={post._id} className="border-b dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700/50">
-                          <td className="py-3 px-4">
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={post.image}
-                                alt={post.title}
-                                className="w-12 h-12 object-cover rounded"
-                              />
+                      {posts.map(post => (
+                        <tr key={post._id} className="dash-tr" style={{ borderBottom: `1px solid ${c.tableBorder}` }}>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 160 }}>
+                              <img src={post.image} alt={post.title} style={{ width: 46, height: 46, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
                               <div>
-                                <p className="font-medium line-clamp-1">{post.title}</p>
-                                <p className="text-xs text-gray-500">
-                                  {new Date(post.createdAt).toLocaleDateString()}
-                                </p>
+                                <p style={{ fontSize: 13, fontWeight: 700, color: c.headingColor, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>{post.title}</p>
+                                <p style={{ fontSize: 11, color: c.mutedText, margin: '3px 0 0' }}>{new Date(post.createdAt).toLocaleDateString()}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4">
-                            <span className="badge badge-primary text-xs">{post.category}</span>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{ padding: '4px 10px', background: isDark ? 'rgba(22,163,74,.15)' : '#dcfce7', color: '#15803d', borderRadius: 100, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>{post.category}</span>
                           </td>
-                          <td className="py-3 px-4 text-center">{post.views}</td>
-                          <td className="py-3 px-4 text-center">{post.likes}</td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`badge text-xs ${
-                              post.status === 'published'
-                                ? 'badge-success'
-                                : post.status === 'draft'
-                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-                            }`}>
+                          <td style={{ padding: '12px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: c.bodyText }}>{post.views}</td>
+                          <td style={{ padding: '12px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: c.bodyText }}>{post.likes}</td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{ padding: '4px 10px', background: post.status === 'published' ? (isDark ? 'rgba(22,163,74,.15)' : '#dcfce7') : post.status === 'draft' ? (isDark ? 'rgba(180,83,9,.2)' : '#fef3c7') : (isDark ? 'rgba(55,65,81,.3)' : '#f3f4f6'), color: post.status === 'published' ? '#15803d' : post.status === 'draft' ? '#b45309' : c.mutedText, borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
                               {post.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-center space-x-2">
-                              <button
-                                onClick={() => window.open(`/news/${post._id}`, '_blank')}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                title="View"
-                              >
-                                <Eye size={18} className="text-blue-500" />
-                              </button>
-                              <button
-                                onClick={() => handleEdit(post)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                title="Edit"
-                              >
-                                <Edit2 size={18} className="text-primary-500" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(post._id)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} className="text-red-500" />
-                              </button>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                              {actionBtn(isDark ? 'rgba(59,130,246,.12)' : '#eff6ff', isDark ? 'rgba(59,130,246,.25)' : '#dbeafe', <Eye size={15} color="#3b82f6" />, () => window.open(`/news/${post._id}`, '_blank'), 'View')}
+                              {actionBtn(isDark ? 'rgba(22,163,74,.12)'  : '#f0fdf4', isDark ? 'rgba(22,163,74,.25)'  : '#dcfce7', <Edit2 size={15} color="#16a34a" />, () => handleEdit(post), 'Edit')}
+                              {actionBtn(isDark ? 'rgba(239,68,68,.12)'  : '#fef2f2', isDark ? 'rgba(239,68,68,.25)'  : '#fee2e2', <Trash2 size={15} color="#ef4444" />, () => handleDelete(post._id), 'Delete')}
                             </div>
                           </td>
                         </tr>
@@ -896,303 +465,177 @@ const handleLogout = () => {
             </div>
           )}
 
-          {activeTab === 'contacts' && (
-            <ContactsManagement contactsAPI={contactsAPI} />
-          )}
+          {/* ── Contacts Tab ── */}
+          {activeTab === 'contacts' && <ContactsManagement contactsAPI={contactsAPI} />}
 
+          {/* ── Admins Tab ── */}
           {activeTab === 'admins' && isSuperAdmin && (
             <div>
-             
-              <div className="flex space-x-4 mb-6">
-                <button
-                  onClick={() => setShowAdminForm(true)}
-                  className="btn-primary flex items-center space-x-2"
-                >
-                  <UserPlus size={20} />
-                  <span>Create Admin Directly</span>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+                <button onClick={() => setShowAdminForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 700, fontSize: 13, boxShadow: '0 4px 12px rgba(22,163,74,.3)', fontFamily: "'DM Sans', sans-serif" }}>
+                  <UserPlus size={16} /> Create Admin
                 </button>
-                <button
-                  onClick={() => setShowInviteForm(true)}
-                  className="btn-secondary flex items-center space-x-2"
-                >
-                  <Key size={20} />
-                  <span>Generate Invite Code</span>
+                <button onClick={() => setShowInviteForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: c.inputBg, color: c.bodyText, border: `1.5px solid ${c.inputBorder}`, borderRadius: 12, cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+                  <Key size={16} /> Generate Invite
                 </button>
               </div>
 
               {showAdminForm && (
-                <div className="mb-6 p-6 border-2 border-primary-200 dark:border-primary-800 rounded-lg bg-primary-50/50 dark:bg-primary-900/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold">Create New Admin</h3>
-                    <button onClick={() => setShowAdminForm(false)}>
-                      <X size={20} />
-                    </button>
+                <div style={{ marginBottom: 20, padding: 22, border: `2px solid ${c.formBorder}`, borderRadius: 18, background: c.formBg }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: c.headingColor, fontFamily: "'Playfair Display', serif" }}>Create New Admin</h3>
+                    <button onClick={() => setShowAdminForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.mutedText }}><X size={20} /></button>
                   </div>
-                  <form onSubmit={handleCreateAdmin} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Name *</label>
-                        <input
-                          type="text"
-                          value={adminFormData.name}
-                          onChange={(e) => setAdminFormData({...adminFormData, name: e.target.value})}
-                          className="input"
-                          required
-                        />
+                  <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
+                    {[['Name', 'text', 'name'], ['Email', 'email', 'email'], ['Password', 'password', 'password']].map(([lbl, type, key]) => (
+                      <div key={key}>
+                        <label style={labelStyle}>{lbl} *</label>
+                        <input type={type} value={adminFormData[key]} onChange={e => setAdminFormData({ ...adminFormData, [key]: e.target.value })} required className="dash-input" style={inputStyle} />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Email *</label>
-                        <input
-                          type="email"
-                          value={adminFormData.email}
-                          onChange={(e) => setAdminFormData({...adminFormData, email: e.target.value})}
-                          className="input"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Password *</label>
-                        <input
-                          type="password"
-                          value={adminFormData.password}
-                          onChange={(e) => setAdminFormData({...adminFormData, password: e.target.value})}
-                          className="input"
-                          required
-                          minLength={6}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Role *</label>
-                        <select
-                          value={adminFormData.role}
-                          onChange={(e) => setAdminFormData({...adminFormData, role: e.target.value})}
-                          className="input"
-                        >
-                          <option value="admin">Admin</option>
-                          <option value="editor">Editor</option>
-                          <option value="moderator">Moderator</option>
-                        </select>
-                      </div>
+                    ))}
+                    <div>
+                      <label style={labelStyle}>Role *</label>
+                      <select value={adminFormData.role} onChange={e => setAdminFormData({ ...adminFormData, role: e.target.value })} className="dash-input" style={inputStyle}>
+                        <option value="admin">Admin</option><option value="editor">Editor</option><option value="moderator">Moderator</option>
+                      </select>
                     </div>
-                    <button type="submit" className="btn-primary">Create Admin</button>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <button type="submit" style={{ padding: '10px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Create Admin</button>
+                    </div>
                   </form>
                 </div>
               )}
 
               {showInviteForm && (
-                <div className="mb-6 p-6 border-2 border-green-200 dark:border-green-800 rounded-lg bg-green-50/50 dark:bg-green-900/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold">Generate Invite Code</h3>
-                    <button onClick={() => setShowInviteForm(false)}>
-                      <X size={20} />
-                    </button>
+                <div style={{ marginBottom: 20, padding: 22, border: `2px solid ${c.formBorder}`, borderRadius: 18, background: c.formBg }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: c.headingColor, fontFamily: "'Playfair Display', serif" }}>Generate Invite Code</h3>
+                    <button onClick={() => setShowInviteForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.mutedText }}><X size={20} /></button>
                   </div>
-                  <form onSubmit={handleGenerateInvite} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <form onSubmit={handleGenerateInvite} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 12 }}>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Role *</label>
-                        <select
-                          value={inviteFormData.role}
-                          onChange={(e) => setInviteFormData({...inviteFormData, role: e.target.value})}
-                          className="input"
-                        >
-                          <option value="admin">Admin</option>
-                          <option value="editor">Editor</option>
-                          <option value="moderator">Moderator</option>
+                        <label style={labelStyle}>Role</label>
+                        <select value={inviteFormData.role} onChange={e => setInviteFormData({ ...inviteFormData, role: e.target.value })} className="dash-input" style={inputStyle}>
+                          <option value="admin">Admin</option><option value="editor">Editor</option><option value="moderator">Moderator</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Expires In (Days)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="365"
-                          value={inviteFormData.expiresInDays}
-                          onChange={(e) => setInviteFormData({...inviteFormData, expiresInDays: parseInt(e.target.value)})}
-                          className="input"
-                        />
+                        <label style={labelStyle}>Expires (Days)</label>
+                        <input type="number" min={1} max={365} value={inviteFormData.expiresInDays} onChange={e => setInviteFormData({ ...inviteFormData, expiresInDays: parseInt(e.target.value) })} className="dash-input" style={inputStyle} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Max Uses</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={inviteFormData.maxUses}
-                          onChange={(e) => setInviteFormData({...inviteFormData, maxUses: parseInt(e.target.value)})}
-                          className="input"
-                          disabled={inviteFormData.isSingleUse}
-                        />
+                        <label style={labelStyle}>Max Uses</label>
+                        <input type="number" min={1} max={100} value={inviteFormData.maxUses} disabled={inviteFormData.isSingleUse} onChange={e => setInviteFormData({ ...inviteFormData, maxUses: parseInt(e.target.value) })} className="dash-input" style={{ ...inputStyle, opacity: inviteFormData.isSingleUse ? .5 : 1 }} />
                       </div>
                     </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600, color: c.bodyText }}>
+                      <input type="checkbox" checked={inviteFormData.isSingleUse} onChange={e => setInviteFormData({ ...inviteFormData, isSingleUse: e.target.checked, maxUses: e.target.checked ? 1 : inviteFormData.maxUses })} style={{ width: 17, height: 17, accentColor: '#16a34a' }} />
+                      Single Use Only
+                    </label>
                     <div>
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={inviteFormData.isSingleUse}
-                          onChange={(e) => setInviteFormData({...inviteFormData, isSingleUse: e.target.checked, maxUses: e.target.checked ? 1 : inviteFormData.maxUses})}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-sm">Single Use Only</span>
-                      </label>
+                      <label style={labelStyle}>Note (Optional)</label>
+                      <input type="text" value={inviteFormData.note} onChange={e => setInviteFormData({ ...inviteFormData, note: e.target.value })} placeholder="For marketing team..." className="dash-input" style={inputStyle} />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Note (Optional)</label>
-                      <input
-                        type="text"
-                        value={inviteFormData.note}
-                        onChange={(e) => setInviteFormData({...inviteFormData, note: e.target.value})}
-                        className="input"
-                        placeholder="For marketing team..."
-                      />
-                    </div>
-                    <button type="submit" className="btn-primary">Generate Code</button>
+                    <button type="submit" style={{ padding: '10px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans', sans-serif", alignSelf: 'flex-start' }}>Generate Code</button>
                   </form>
                 </div>
               )}
 
-              <div className="mb-8">
-                <h3 className="text-xl font-bold mb-4">All Admins ({admins.length})</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b dark:border-dark-700">
-                        <th className="text-left py-3 px-4 font-semibold">Name</th>
-                        <th className="text-left py-3 px-4 font-semibold">Email</th>
-                        <th className="text-center py-3 px-4 font-semibold">Role</th>
-                        <th className="text-center py-3 px-4 font-semibold">Status</th>
-                        <th className="text-center py-3 px-4 font-semibold">Last Login</th>
-                        <th className="text-center py-3 px-4 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {admins.map((adminUser) => (
-                        <tr key={adminUser._id} className="border-b dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700/50">
-                          <td className="py-3 px-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                {adminUser.name[0].toUpperCase()}
-                              </div>
-                              <span className="font-medium">{adminUser.name}</span>
+              {/* Admins Table */}
+              <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14, color: c.headingColor, fontFamily: "'Playfair Display', serif" }}>All Admins ({admins.length})</h3>
+              <div style={{ overflowX: 'auto', marginBottom: 32 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `2px solid ${c.tableBorder}` }}>
+                      {['Name', 'Email', 'Role', 'Status', 'Actions'].map(h => (
+                        <th key={h} style={{ textAlign: h === 'Name' || h === 'Email' ? 'left' : 'center', padding: '10px 12px', fontSize: 12, fontWeight: 700, color: c.mutedText, textTransform: 'uppercase', letterSpacing: .5 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {admins.map(adminUser => {
+                      const rb = getRoleBadgeColor(adminUser.role);
+                      return (
+                        <tr key={adminUser._id} className="dash-tr" style={{ borderBottom: `1px solid ${c.tableBorder}` }}>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#16a34a', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{adminUser.name[0].toUpperCase()}</div>
+                              <span style={{ fontWeight: 600, fontSize: 13, color: c.headingColor }}>{adminUser.name}</span>
                             </div>
                           </td>
-                          <td className="py-3 px-4">{adminUser.email}</td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`badge text-xs ${getRoleBadgeColor(adminUser.role)}`}>
-                              {adminUser.role}
-                            </span>
+                          <td style={{ padding: '12px', fontSize: 13, color: c.bodyText }}>{adminUser.email}</td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{ padding: '4px 10px', background: rb.bg, color: rb.color, borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{adminUser.role}</span>
                           </td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`badge text-xs ${adminUser.isActive ? 'badge-success' : 'badge-danger'}`}>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{ padding: '4px 10px', background: adminUser.isActive ? (isDark ? 'rgba(22,163,74,.15)' : '#dcfce7') : (isDark ? 'rgba(239,68,68,.15)' : '#fee2e2'), color: adminUser.isActive ? '#15803d' : '#dc2626', borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
                               {adminUser.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-center text-sm">
-                            {adminUser.lastLogin ? new Date(adminUser.lastLogin).toLocaleDateString() : 'Never'}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-center space-x-2">
-                              {adminUser._id !== admin.id && adminUser.role !== 'super-admin' && (
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                              {adminUser._id !== admin.id && adminUser.role !== 'super-admin' ? (
                                 <>
-                                  <button
-                                    onClick={() => handleUpdateAdmin(adminUser._id, { isActive: !adminUser.isActive })}
-                                    className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                    title={adminUser.isActive ? 'Deactivate' : 'Activate'}
-                                  >
-                                    <Shield size={18} className={adminUser.isActive ? 'text-green-500' : 'text-gray-400'} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteAdmin(adminUser._id)}
-                                    className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={18} className="text-red-500" />
-                                  </button>
+                                  {actionBtn(adminUser.isActive ? (isDark ? 'rgba(22,163,74,.12)' : '#f0fdf4') : (isDark ? '#1e293b' : '#f3f4f6'), adminUser.isActive ? (isDark ? 'rgba(22,163,74,.25)' : '#dcfce7') : (isDark ? '#334155' : '#e5e7eb'), <Shield size={15} color={adminUser.isActive ? '#16a34a' : '#9ca3af'} />, () => handleUpdateAdmin(adminUser._id, { isActive: !adminUser.isActive }), adminUser.isActive ? 'Deactivate' : 'Activate')}
+                                  {actionBtn(isDark ? 'rgba(239,68,68,.12)' : '#fef2f2', isDark ? 'rgba(239,68,68,.25)' : '#fee2e2', <Trash2 size={15} color="#ef4444" />, () => handleDeleteAdmin(adminUser._id), 'Delete')}
                                 </>
-                              )}
-                              {adminUser._id === admin.id && (
-                                <span className="text-xs text-gray-500">You</span>
+                              ) : (
+                                <span style={{ fontSize: 11, color: c.mutedText }}>You</span>
                               )}
                             </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
-              <div>
-                <h3 className="text-xl font-bold mb-4">Invite Codes ({inviteCodes.length})</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b dark:border-dark-700">
-                        <th className="text-left py-3 px-4 font-semibold">Code</th>
-                        <th className="text-center py-3 px-4 font-semibold">Role</th>
-                        <th className="text-center py-3 px-4 font-semibold">Status</th>
-                        <th className="text-center py-3 px-4 font-semibold">Uses</th>
-                        <th className="text-center py-3 px-4 font-semibold">Expires</th>
-                        <th className="text-center py-3 px-4 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {inviteCodes.map((invite) => (
-                        <tr key={invite._id} className="border-b dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700/50">
-                          <td className="py-3 px-4">
-                            <code className="text-sm bg-gray-100 dark:bg-dark-700 px-2 py-1 rounded">{invite.code}</code>
+              {/* Invite Codes Table */}
+              <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14, color: c.headingColor, fontFamily: "'Playfair Display', serif" }}>Invite Codes ({inviteCodes.length})</h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 460 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `2px solid ${c.tableBorder}` }}>
+                      {['Code', 'Role', 'Status', 'Uses', 'Expires', 'Actions'].map(h => (
+                        <th key={h} style={{ textAlign: h === 'Code' ? 'left' : 'center', padding: '10px 12px', fontSize: 12, fontWeight: 700, color: c.mutedText, textTransform: 'uppercase', letterSpacing: .5, whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inviteCodes.map(invite => {
+                      const rb = getRoleBadgeColor(invite.role);
+                      const isExpired = new Date(invite.expiresAt) < new Date();
+                      const s = {
+                        label: invite.isRevoked ? 'Revoked' : invite.isUsed ? 'Used' : isExpired ? 'Expired' : 'Active',
+                        bg:    invite.isRevoked ? (isDark ? 'rgba(239,68,68,.15)' : '#fee2e2') : invite.isUsed ? (isDark ? '#1e293b' : '#f3f4f6') : isExpired ? (isDark ? 'rgba(180,83,9,.2)' : '#fef3c7') : (isDark ? 'rgba(22,163,74,.15)' : '#dcfce7'),
+                        color: invite.isRevoked ? '#dc2626' : invite.isUsed ? c.mutedText : isExpired ? '#b45309' : '#15803d',
+                      };
+                      return (
+                        <tr key={invite._id} className="dash-tr" style={{ borderBottom: `1px solid ${c.tableBorder}` }}>
+                          <td style={{ padding: '12px' }}>
+                            <code style={{ background: isDark ? '#0f172a' : '#f3f4f6', color: c.headingColor, padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, border: `1px solid ${c.inputBorder}` }}>{invite.code}</code>
                           </td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`badge text-xs ${getRoleBadgeColor(invite.role)}`}>
-                              {invite.role}
-                            </span>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{ padding: '4px 10px', background: rb.bg, color: rb.color, borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{invite.role}</span>
                           </td>
-                          <td className="py-3 px-4 text-center">
-                            {invite.isRevoked ? (
-                              <span className="badge badge-danger text-xs">Revoked</span>
-                            ) : invite.isUsed ? (
-                              <span className="badge bg-gray-100 text-gray-700 text-xs">Used</span>
-                            ) : new Date(invite.expiresAt) < new Date() ? (
-                              <span className="badge bg-yellow-100 text-yellow-700 text-xs">Expired</span>
-                            ) : (
-                              <span className="badge badge-success text-xs">Active</span>
-                            )}
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <span style={{ padding: '4px 10px', background: s.bg, color: s.color, borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{s.label}</span>
                           </td>
-                          <td className="py-3 px-4 text-center text-sm">
-                            {invite.usageCount} / {invite.maxUses}
-                          </td>
-                          <td className="py-3 px-4 text-center text-sm">
-                            {new Date(invite.expiresAt).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-center space-x-2">
-                              <button
-                                onClick={() => handleCopyInviteLink(invite.code)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                title="Copy Signup Link"
-                              >
-                                {copiedCode === invite.code ? (
-                                  <Check size={18} className="text-green-500" />
-                                ) : (
-                                  <Copy size={18} className="text-blue-500" />
-                                )}
-                              </button>
-                              {!invite.isRevoked && (
-                                <button
-                                  onClick={() => handleRevokeInvite(invite._id)}
-                                  className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded transition"
-                                  title="Revoke"
-                                >
-                                  <X size={18} className="text-red-500" />
-                                </button>
-                              )}
+                          <td style={{ padding: '12px', textAlign: 'center', fontSize: 13, color: c.bodyText }}>{invite.usageCount} / {invite.maxUses}</td>
+                          <td style={{ padding: '12px', textAlign: 'center', fontSize: 12, color: c.mutedText, whiteSpace: 'nowrap' }}>{new Date(invite.expiresAt).toLocaleDateString()}</td>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                              {actionBtn(isDark ? 'rgba(59,130,246,.12)' : '#eff6ff', isDark ? 'rgba(59,130,246,.25)' : '#dbeafe', copiedCode === invite.code ? <Check size={15} color="#16a34a" /> : <Copy size={15} color="#3b82f6" />, () => handleCopyInviteLink(invite.code), 'Copy Link')}
+                              {!invite.isRevoked && actionBtn(isDark ? 'rgba(239,68,68,.12)' : '#fef2f2', isDark ? 'rgba(239,68,68,.25)' : '#fee2e2', <X size={15} color="#ef4444" />, () => handleRevokeInvite(invite._id), 'Revoke')}
                             </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

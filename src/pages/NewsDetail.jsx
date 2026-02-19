@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Eye, Heart, Share2, ArrowLeft, ExternalLink } from 'lucide-react';
@@ -9,32 +8,28 @@ import TrendingPost from '../components/TrendingPost';
 import { formatDistanceToNow } from 'date-fns';
 
 const NewsDetail = () => {
-  const { id } = useParams();
+  // param is now "slug" to match the route /news/:slug
+  const { slug } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasLiked, setHasLiked] = useState(false);
   const [trendingPosts, setTrendingPosts] = useState([]);
 
-  useEffect(() => {
-    fetchPost();
-    fetchTrending();
-  }, [id]);
+  useEffect(() => { fetchPost(); fetchTrending(); }, [slug]);
 
   const fetchPost = async () => {
     try {
       setLoading(true);
-      const response = await postsAPI.getOne(id);
+      // Backend already handles both _id and slug via $or query — no change needed there
+      const response = await postsAPI.getOne(slug);
       setPost(response.data.data.post);
-      
       const userIdentifier = localStorage.getItem('userIdentifier');
       if (userIdentifier && response.data.data.post.likedBy?.includes(userIdentifier)) {
         setHasLiked(true);
       }
     } catch (error) {
       console.error('Error fetching post:', error);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const fetchTrending = async () => {
@@ -48,7 +43,8 @@ const NewsDetail = () => {
 
   const handleLike = async () => {
     try {
-      const response = await postsAPI.like(id);
+      // Like by _id (post._id) for reliability after we've already fetched the post
+      const response = await postsAPI.like(post._id);
       setPost({ ...post, likes: response.data.data.likes });
       setHasLiked(response.data.data.hasLiked);
     } catch (error) {
@@ -58,10 +54,7 @@ const NewsDetail = () => {
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({
-        title: post.title,
-        url: window.location.href,
-      });
+      navigator.share({ title: post.title, url: window.location.href });
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
@@ -72,201 +65,202 @@ const NewsDetail = () => {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
-    return match && match[2].length === 11
-      ? `https://www.youtube.com/embed/${match[2]}`
-      : null;
+    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : null;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ fontFamily: 'DM Sans,sans-serif', background: '#f8fafc', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 48, height: 48, border: '3px solid #dcfce7', borderTopColor: '#16a34a', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style>
+    </div>
+  );
 
-  if (!post) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <h2 className="text-2xl font-bold">Post not found</h2>
-        <Link to="/" className="btn-primary mt-4">Go Home</Link>
+  if (!post) return (
+    <div style={{ fontFamily: 'DM Sans,sans-serif', background: '#f8fafc', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 64, marginBottom: 20 }}>📰</div>
+        <h2 style={{ fontSize: 26, fontWeight: 800, color: '#0f1a12', marginBottom: 16, fontFamily: "'Playfair Display',serif" }}>Post not found</h2>
+        <Link to="/" style={{ display: 'inline-block', padding: '12px 28px', background: '#16a34a', color: 'white', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none', boxShadow: '0 4px 12px rgba(22,163,74,.3)' }}>
+          Go Home
+        </Link>
       </div>
-    );
-  }
+    </div>
+  );
 
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
   const embedUrl = getYouTubeEmbedUrl(post.videoUrl);
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden">
-    
-      <div className="w-full max-w-7xl mx-auto px-0 sm:px-4 py-4 sm:py-8">
-   
-        <div className="px-4 sm:px-0 mb-4 sm:mb-6">
-          <Link
-            to="/"
-            className="inline-flex items-center space-x-2 text-primary-500 hover:text-primary-600 transition"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Home</span>
-          </Link>
-        </div>
+    <div className="bg-gray-50 dark:bg-gray-950" style={{ fontFamily: "'DM Sans',sans-serif", minHeight: '100vh' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
 
-        <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-8">
-     
-          <div className="w-full lg:col-span-2">
-            <article className="card rounded-none sm:rounded-lg p-4 sm:p-6 lg:p-8 overflow-hidden">
-             
-              <span className="inline-block badge bg-primary-500 text-white mb-3 sm:mb-4">
+        .share-btn {
+          padding: 8px 18px; border-radius: 10px; border: 1.5px solid #e5e7eb;
+          background: white; font-size: 13px; font-weight: 700; color: #374151;
+          cursor: pointer; transition: .2s; font-family: 'DM Sans',sans-serif; white-space: nowrap;
+        }
+        .share-btn:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+
+        .article-content { font-size: 17px; line-height: 1.8; color: #374151; }
+        .article-content h1 { font-size: 32px; font-weight: 800; margin: 32px 0 16px; color: #0f1a12; font-family: 'Playfair Display',serif; }
+        .article-content h2 { font-size: 26px; font-weight: 800; margin: 28px 0 14px; color: #0f1a12; font-family: 'Playfair Display',serif; }
+        .article-content h3 { font-size: 22px; font-weight: 800; margin: 24px 0 12px; color: #0f1a12; font-family: 'Playfair Display',serif; }
+        .article-content p { margin-bottom: 16px; }
+        .article-content a { color: #16a34a; text-decoration: none; font-weight: 600; }
+        .article-content a:hover { text-decoration: underline; }
+        .article-content ul, .article-content ol { margin: 16px 0; padding-left: 28px; }
+        .article-content li { margin-bottom: 8px; }
+        .article-content img { border-radius: 16px; margin: 24px 0; max-width: 100%; height: auto; }
+        .article-content blockquote { border-left: 4px solid #16a34a; padding: 12px 20px; background: #f9fafb; margin: 20px 0; border-radius: 8px; font-style: italic; }
+        .article-content code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 15px; }
+
+        /* Dark mode article content */
+        .dark .article-content { color: #d1d5db; }
+        .dark .article-content h1, .dark .article-content h2, .dark .article-content h3 { color: #f9fafb; }
+        .dark .article-content blockquote { background: #1f2937; }
+        .dark .article-content code { background: #1f2937; color: #d1fae5; }
+        .dark .share-btn { background: #1f2937; border-color: #374151; color: #d1d5db; }
+        .dark .share-btn:hover { border-color: #16a34a; color: #16a34a; background: #052e16; }
+
+        @media(max-width:1024px){ .two-col { grid-template-columns: 1fr !important; } }
+      `}</style>
+
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px' }}>
+
+        {/* Back Button */}
+        <Link to="/"
+          className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none', marginBottom: 24, transition: '.2s' }}
+          onMouseEnter={e => e.currentTarget.style.gap = '12px'}
+          onMouseLeave={e => e.currentTarget.style.gap = '8px'}
+        >
+          <ArrowLeft size={18} />
+          Back to Home
+        </Link>
+
+        <div className="two-col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
+
+          {/* Main Article */}
+          <div style={{ animation: 'fadeUp .4s ease' }}>
+            <article className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
+              style={{ borderRadius: 24, padding: '32px', boxShadow: '0 4px 20px rgba(0,0,0,.07)' }}>
+
+              {/* Category Badge */}
+              <span style={{ display: 'inline-block', padding: '6px 16px', background: '#16a34a', color: 'white', borderRadius: 100, fontSize: 12, fontWeight: 700, marginBottom: 20, letterSpacing: .5 }}>
                 {post.category}
               </span>
 
-             
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-bold mb-3 sm:mb-4 leading-tight break-words">
+              {/* Title */}
+              <h1 className="text-gray-900 dark:text-white"
+                style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, marginBottom: 24, lineHeight: 1.2 }}>
                 {post.title}
               </h1>
 
-             
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 sm:py-4 border-y border-gray-200 dark:border-dark-700 mb-4 sm:mb-6 gap-3 sm:gap-0">
-                <div className="flex items-center flex-wrap gap-x-3 gap-y-2 sm:space-x-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  <span className="flex items-center space-x-1">
-                    <Calendar size={16} />
-                    <span>{timeAgo}</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <Eye size={16} />
-                    <span>{post.views} views</span>
-                  </span>
+              {/* Slug display — helps users see the clean URL */}
+              {post.slug && (
+                <p className="text-gray-400 dark:text-gray-500" style={{ fontSize: 12, fontWeight: 600, marginBottom: 16, fontFamily: 'monospace', letterSpacing: .3 }}>
+                  /news/{post.slug}
+                </p>
+              )}
+
+              {/* Meta Bar */}
+              <div className="border-gray-100 dark:border-gray-800"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderTopWidth: 1, borderBottomWidth: 1, borderStyle: 'solid', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+                <div className="text-gray-500 dark:text-gray-400" style={{ display: 'flex', gap: 20, fontSize: 14 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={16} />{timeAgo}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Eye size={16} />{post.views} views</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={handleLike}
-                    className={`flex items-center space-x-1 ${
-                      hasLiked ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'
-                    } hover:text-red-500 transition`}
-                  >
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <button onClick={handleLike}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: hasLiked ? '#ef4444' : '#6b7280', transition: '.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                    onMouseLeave={e => e.currentTarget.style.color = hasLiked ? '#ef4444' : '#6b7280'}>
                     <Heart size={20} fill={hasLiked ? 'currentColor' : 'none'} />
-                    <span className="text-sm sm:text-base">{post.likes}</span>
+                    {post.likes}
                   </button>
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center space-x-1 text-gray-600 dark:text-gray-400 hover:text-primary-500 transition"
-                  >
+                  <button onClick={handleShare}
+                    className="text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, transition: '.2s' }}>
                     <Share2 size={20} />
                   </button>
                 </div>
               </div>
 
-              <div className="w-full mb-4 sm:mb-6 overflow-hidden">
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="w-full h-48 sm:h-64 lg:h-96 object-cover rounded-lg"
-                />
+              {/* Featured Image */}
+              <div style={{ borderRadius: 20, overflow: 'hidden', marginBottom: 28 }}>
+                <img src={post.image} alt={post.title} style={{ width: '100%', height: 400, objectFit: 'cover' }} />
               </div>
 
-             
+              {/* Video Embed */}
               {embedUrl && (
-                <div className="w-full mb-4 sm:mb-6">
-                  <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-lg">
-                    <iframe
-                      src={embedUrl}
-                      className="absolute top-0 left-0 w-full h-full"
-                      frameBorder="0"
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 16 }}>
+                    <iframe src={embedUrl}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
+                      allowFullScreen />
                   </div>
                   {post.videoLink && (
-                    <a
-                      href={post.videoLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center space-x-2 mt-3 sm:mt-4 text-primary-500 hover:text-primary-600 transition text-sm sm:text-base"
-                    >
-                      <ExternalLink size={16} />
-                      <span>Watch Full Video</span>
+                    <a href={post.videoLink} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, color: '#16a34a', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+                      <ExternalLink size={16} />Watch Full Video
                     </a>
                   )}
                 </div>
               )}
 
-              <div 
-            className="prose prose-base sm:prose-lg lg:prose-xl dark:prose-invert max-w-none mb-6 sm:mb-8 break-words
-              prose-headings:font-heading prose-headings:font-bold prose-headings:break-words
-              prose-h1:text-3xl sm:prose-h1:text-4xl prose-h2:text-2xl sm:prose-h2:text-3xl prose-h3:text-xl sm:prose-h3:text-2xl
-              prose-a:text-primary-500 prose-a:no-underline prose-a:break-words hover:prose-a:underline
-              prose-blockquote:border-primary-500 prose-blockquote:bg-gray-50 dark:prose-blockquote:bg-dark-800
-              prose-code:bg-gray-100 dark:prose-code:bg-dark-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:break-words
-              prose-img:rounded-lg prose-img:shadow-md prose-img:max-w-full
-              prose-p:leading-relaxed prose-p:mb-3 sm:prose-p:mb-4 prose-p:text-base sm:prose-p:text-lg
-              prose-ul:list-disc prose-ul:ml-4 sm:prose-ul:ml-6 prose-ul:mb-3 sm:prose-ul:mb-4
-              prose-ol:list-decimal prose-ol:ml-4 sm:prose-ol:ml-6 prose-ol:mb-3 sm:prose-ol:mb-4
-              prose-li:mb-2 prose-li:text-base sm:prose-li:text-lg
-              prose-table:overflow-x-auto prose-table:block
-              [&_*]:max-w-full [&_img]:w-full [&_img]:h-auto"
-               dangerouslySetInnerHTML={{ __html: post.content }}
-             />
+              {/* Article Content */}
+              <div className="article-content" dangerouslySetInnerHTML={{ __html: post.content }} />
 
-            
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
-                  {post.tags.map((tag) => (
-                    <span key={tag} className="badge badge-primary text-xs sm:text-sm">
+              {/* Tags */}
+              {post.tags?.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 32, paddingTop: 24, borderTop: '1px solid #f3f4f6' }}>
+                  {post.tags.map(tag => (
+                    <span key={tag} style={{ padding: '6px 14px', background: '#f0fdf4', color: '#16a34a', borderRadius: 100, fontSize: 12, fontWeight: 700 }}>
                       #{tag}
                     </span>
                   ))}
                 </div>
               )}
 
-            
-              <div className="border-t border-gray-200 dark:border-dark-700 pt-4 sm:pt-6">
-                <p className="text-xs sm:text-sm font-semibold mb-3">Share this article:</p>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <button className="btn-outline text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 whitespace-nowrap">Facebook</button>
-                  <button className="btn-outline text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 whitespace-nowrap">Twitter</button>
-                  <button className="btn-outline text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 whitespace-nowrap">WhatsApp</button>
-                  <button onClick={handleShare} className="btn-outline text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 whitespace-nowrap">
-                    Copy Link
-                  </button>
+              {/* Share Buttons */}
+              <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #f3f4f6' }}>
+                <p className="text-gray-700 dark:text-gray-300" style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, textTransform: 'uppercase', letterSpacing: .5 }}>
+                  Share this article:
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  <button className="share-btn" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}>Facebook</button>
+                  <button className="share-btn" onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, '_blank')}>Twitter</button>
+                  <button className="share-btn" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(post.title + ' ' + window.location.href)}`, '_blank')}>WhatsApp</button>
+                  <button className="share-btn" onClick={handleShare}>Copy Link</button>
                 </div>
               </div>
             </article>
 
-          
-            <div className="mt-4 sm:mt-6 lg:mt-8 px-4 sm:px-0">
+            {/* Comments */}
+            <div style={{ marginTop: 24 }}>
               <CommentSection postId={post._id} />
             </div>
           </div>
 
-         
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="sticky top-24">
-              <div className="card p-6">
-                <h3 className="text-xl font-heading font-bold mb-4 flex items-center">
-                  <span className="w-1 h-6 bg-primary-500 mr-3" />
+          {/* Sidebar */}
+          <div style={{ animation: 'fadeUp .4s ease .1s both' }}>
+            <div style={{ position: 'sticky', top: 100 }}>
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
+                style={{ borderRadius: 24, padding: '28px 24px', boxShadow: '0 4px 20px rgba(0,0,0,.07)' }}>
+                <h3 className="text-gray-900 dark:text-white"
+                  style={{ fontSize: 20, fontWeight: 800, marginBottom: 20, fontFamily: "'Playfair Display',serif", display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 4, height: 24, background: '#16a34a', borderRadius: 100 }} />
                   Trending Posts
                 </h3>
-                <div className="space-y-4">
-                  {trendingPosts.filter(p => p._id !== post._id).slice(0, 5).map((tPost) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {trendingPosts.filter(p => p._id !== post._id).slice(0, 5).map(tPost => (
                     <TrendingPost key={tPost._id} post={tPost} />
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:hidden mt-6">
-          <div className="card p-4 sm:p-6 rounded-none sm:rounded-lg mx-4 sm:mx-0">
-            <h3 className="text-lg sm:text-xl font-heading font-bold mb-4 flex items-center">
-              <span className="w-1 h-5 sm:h-6 bg-primary-500 mr-2 sm:mr-3" />
-              Trending Posts
-            </h3>
-            <div className="space-y-3 sm:space-y-4">
-              {trendingPosts.filter(p => p._id !== post._id).slice(0, 5).map((tPost) => (
-                <TrendingPost key={tPost._id} post={tPost} />
-              ))}
             </div>
           </div>
         </div>

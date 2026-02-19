@@ -1,9 +1,11 @@
 
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Mail, X } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { newsletterAPI } from '../utils/api';
+import { categoryPath } from '../utils/categoryUtils';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -13,22 +15,17 @@ const Footer = () => {
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
-    
     if (!email || !email.includes('@')) {
       showToast('Please enter a valid email address', 'error');
       return;
     }
-    
     try {
       const response = await newsletterAPI.subscribe(email.trim());
       showToast(response.data.message || 'Please check your email to confirm subscription! 🎉', 'success');
       setEmail('');
       setShowSubscribeModal(false);
     } catch (error) {
-      console.error('Newsletter subscription error:', error.response?.data);
-      const errorMsg = error.response?.data?.message || 
-                       error.response?.data?.error ||
-                       'Subscription failed. Please try again.';
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Subscription failed. Please try again.';
       showToast(errorMsg, 'error');
     }
   };
@@ -40,166 +37,163 @@ const Footer = () => {
       { name: 'Contact', path: '/contact' },
       { name: 'Privacy Policy', path: '/privacy' },
     ],
+    // Category paths now use slugs via categoryPath()
     'Categories': [
-      { name: 'Breaking News', path: '/?category=Breaking%20News' },
-      { name: 'Sports', path: '/?category=Sports' },
-      { name: 'Entertainment', path: '/?category=Entertainment' },
-      { name: 'Technology', path: '/?category=Technology' },
+      { name: 'Breaking News', path: categoryPath('Breaking News') },
+      { name: 'Sports',        path: categoryPath('Sports') },
+      { name: 'Entertainment', path: categoryPath('Entertainment') },
+      { name: 'Technology',    path: categoryPath('Technology') },
     ],
     'Follow Us': [
-      { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/inkstonemedia' },
-      { name: 'Twitter', icon: Twitter, url: 'https://twitter.com/inkstonemedia' },
+      { name: 'Facebook',  icon: Facebook,  url: 'https://facebook.com/inkstonemedia' },
+      { name: 'Twitter',   icon: Twitter,   url: 'https://twitter.com/inkstonemedia' },
       { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/inkstonemedia' },
-      { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@inkstonemedia' },
+      { name: 'YouTube',   icon: Youtube,   url: 'https://youtube.com/@inkstonemedia' },
     ]
   };
 
   return (
     <>
-      <footer className="bg-dark-900 text-gray-300 mt-16">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+        @keyframes scaleIn { from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);} }
+        @keyframes fadeIn  { from{opacity:0;}to{opacity:1;} }
+        .footer-link { color:#9ca3af; font-size:14px; text-decoration:none; transition:.2s; display:block; padding:6px 0; }
+        .footer-link:hover { color:#16a34a; }
+        .social-btn {
+          width:44px; height:44px; border-radius:12px; display:flex; align-items:center;
+          justify-content:center; background:#1a2a1f; transition:.2s; text-decoration:none; color:#9ca3af;
+        }
+        .social-btn:hover { background:#16a34a; color:white; transform:translateY(-2px); box-shadow:0 8px 20px rgba(22,163,74,.4); }
+      `}</style>
+
+      <footer style={{ fontFamily: "'DM Sans',sans-serif", background: '#0f1a12', color: '#9ca3af', marginTop: 64 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 40, marginBottom: 40 }}>
+
+            {/* Brand */}
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <img
-                  src="https://i.postimg.cc/44v0z18m/Chat-GPT-Image-Feb-12-2026-07-24-26-PM.png"
-                  alt="Inkstone Media logo"
-                  className="h-8 w-8 object-contain"
-                />
-                <h3 className="text-xl font-heading font-bold text-white">
-                  INKSTONE <span className="text-primary-500">MEDIA</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <img src="https://i.postimg.cc/Rh7CTkm7/inkstonelogo-green.png" alt="Inkstone Media" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, color: 'white', lineHeight: 1 }}>
+                  INKSTONE <span style={{ color: '#16a34a' }}>MEDIA</span>
                 </h3>
               </div>
-              <p className="text-sm text-gray-400 mb-4">
+              <p style={{ fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
                 Your trusted source for breaking news, sports updates, and entertainment stories from around the world.
               </p>
-              <div className="flex space-x-3">
+              <div style={{ display: 'flex', gap: 10 }}>
                 {footerLinks['Follow Us'].map(({ name, icon: Icon, url }) => (
-                  <a
-                    key={name}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 bg-dark-800 hover:bg-primary-500 rounded-full flex items-center justify-center transition"
-                    aria-label={name}
-                  >
+                  <a key={name} href={url} target="_blank" rel="noopener noreferrer" className="social-btn" title={name}>
                     <Icon size={18} />
                   </a>
                 ))}
               </div>
             </div>
 
+            {/* Quick Links */}
             <div>
-              <h4 className="text-white font-heading font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                {footerLinks['Quick Links'].map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      to={link.path}
-                      className="text-sm hover:text-primary-400 transition"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
+              <h4 style={{ color: 'white', fontWeight: 800, marginBottom: 16, fontSize: 16 }}>Quick Links</h4>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {footerLinks['Quick Links'].map(link => (
+                  <Link key={link.name} to={link.path} className="footer-link">{link.name}</Link>
                 ))}
-              </ul>
+              </div>
             </div>
 
+            {/* Categories */}
             <div>
-              <h4 className="text-white font-heading font-semibold mb-4">Categories</h4>
-              <ul className="space-y-2">
-                {footerLinks['Categories'].map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      to={link.path}
-                      className="text-sm hover:text-primary-400 transition"
-                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
+              <h4 style={{ color: 'white', fontWeight: 800, marginBottom: 16, fontSize: 16 }}>Categories</h4>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {footerLinks['Categories'].map(link => (
+                  <Link key={link.name} to={link.path} className="footer-link"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                    {link.name}
+                  </Link>
                 ))}
-              </ul>
+              </div>
             </div>
 
+            {/* Newsletter */}
             <div>
-              <h4 className="text-white font-heading font-semibold mb-4">Newsletter</h4>
-              <p className="text-sm text-gray-400 mb-4">
+              <h4 style={{ color: 'white', fontWeight: 800, marginBottom: 16, fontSize: 16 }}>Newsletter</h4>
+              <p style={{ fontSize: 14, marginBottom: 16, lineHeight: 1.7 }}>
                 Subscribe to get the latest news delivered to your inbox.
               </p>
-              <button
-                onClick={() => setShowSubscribeModal(true)}
-                className="w-full btn-primary flex items-center justify-center space-x-2"
-              >
+              <button onClick={() => setShowSubscribeModal(true)}
+                style={{ width: '100%', padding: '12px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: '.2s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                 <Mail size={16} />
-                <span>Subscribe</span>
+                Subscribe
               </button>
             </div>
           </div>
 
-          <div className="border-t border-dark-800 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <p className="text-sm text-gray-400">
-                © {currentYear} <span className="text-primary-500">INKSTONE MEDIA</span>. All rights reserved.
-              </p>
-              <div className="flex space-x-6 text-sm">
-                <Link to="/terms" className="hover:text-primary-400 transition">
-                  Terms of Service
-                </Link>
-                <Link to="/privacy" className="hover:text-primary-400 transition">
-                  Privacy Policy
-                </Link>
-                <Link to="/admin/login" className="hover:text-primary-400 transition">
-                  Admin Login
-                </Link>
-              </div>
+          {/* Bottom Bar */}
+          <div style={{ borderTop: '1px solid #1a2a1f', paddingTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+            <p style={{ fontSize: 14 }}>
+              © {currentYear} <span style={{ color: '#16a34a', fontWeight: 700 }}>INKSTONE MEDIA</span>. All rights reserved.
+            </p>
+            <div style={{ display: 'flex', gap: 20, fontSize: 14 }}>
+              <Link to="/terms" className="footer-link" style={{ padding: 0 }}>Terms of Service</Link>
+              <Link to="/privacy" className="footer-link" style={{ padding: 0 }}>Privacy Policy</Link>
+              <Link to="/admin/login" className="footer-link" style={{ padding: 0 }}>Admin Login</Link>
             </div>
           </div>
         </div>
       </footer>
 
+      {/* Subscribe Modal — unchanged */}
       {showSubscribeModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-2xl max-w-md w-full p-6 animate-slide-in">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <Mail className="text-primary-500" size={24} />
-                <h3 className="text-2xl font-heading font-bold">Subscribe to Newsletter</h3>
+        <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'fadeIn .2s ease' }}
+          onClick={() => setShowSubscribeModal(false)}>
+          <div className="subscribe-modal" style={{ background: 'white', borderRadius: 24, boxShadow: '0 24px 64px rgba(0,0,0,.2)', maxWidth: 480, width: '100%', padding: 32, animation: 'scaleIn .22s ease' }}
+            onClick={e => e.stopPropagation()}>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Mail color="#16a34a" size={22} />
+                </div>
+                <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 800, color: '#0f1a12' }}>
+                  Subscribe
+                </h3>
               </div>
-              <button
-                onClick={() => setShowSubscribeModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-dark-700 rounded transition"
-              >
-                <X size={24} />
+              <button onClick={() => setShowSubscribeModal(false)}
+                style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280', transition: '.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                onMouseLeave={e => e.currentTarget.style.background = '#f9fafb'}>
+                <X size={20} />
               </button>
             </div>
-            
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+
+            <p style={{ fontSize: 15, color: '#6b7280', marginBottom: 24, lineHeight: 1.7 }}>
               Get the latest news and updates delivered to your inbox. Stay informed with INKSTONE MEDIA.
             </p>
-            
-            <form onSubmit={handleSubscribe} className="space-y-4">
+
+            <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label className="block text-sm font-medium mb-2">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="input w-full"
-                  required
-                />
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3 }}>
+                  Email Address
+                </label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required
+                  style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', boxSizing: 'border-box' }}
+                  onFocus={e => e.currentTarget.style.borderColor = '#16a34a'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#e5e7eb'} />
               </div>
-              
-              <div className="flex gap-3">
-                <button type="submit" className="btn-primary flex-1">
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="submit"
+                  style={{ flex: 1, padding: '13px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans,sans-serif', boxShadow: '0 4px 16px rgba(22,163,74,.35)', transition: '.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                   Subscribe Now
                 </button>
-                <button 
-                  type="button"
-                  onClick={() => setShowSubscribeModal(false)}
-                  className="btn-secondary px-6"
-                >
+                <button type="button" onClick={() => setShowSubscribeModal(false)}
+                  style={{ padding: '13px 24px', background: 'white', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans,sans-serif', transition: '.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'white'}>
                   Cancel
                 </button>
               </div>

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+
+
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +11,22 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
+  // ── Sync dark mode with Navbar toggle ──
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.classList.contains('dark')
+  );
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -17,9 +34,7 @@ const AdminLogin = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     const result = await login(email, password);
-
     if (result.success) {
       navigate('/admin/dashboard');
     } else {
@@ -28,87 +43,106 @@ const AdminLogin = () => {
     }
   };
 
+  // ── Color tokens ──
+  const pageBg       = isDark ? 'linear-gradient(135deg,#0f1a12 0%,#14532d 100%)' : 'linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%)';
+  const cardBg       = isDark ? '#1e293b' : 'white';
+  const cardBorder   = isDark ? '#334155' : 'transparent';
+  const headingColor = isDark ? '#f1f5f9' : '#111827';
+  const subText      = isDark ? '#94a3b8' : '#4b5563';
+  const labelColor   = isDark ? '#cbd5e1' : '#374151';
+  const inputBg      = isDark ? '#0f172a' : 'white';
+  const inputBorderColor = isDark ? '#475569' : '#d1d5db';
+  const iconColor    = isDark ? '#64748b' : '#9ca3af';
+  const inputColor   = isDark ? '#f1f5f9' : '#111827';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">I</span>
+    <div style={{ fontFamily: "'DM Sans',sans-serif", minHeight: '100vh', background: pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, transition: 'background .3s' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
+
+      <div style={{ maxWidth: 440, width: '100%' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(22,163,74,.3)' }}>
+              <span style={{ color: 'white', fontSize: 24, fontWeight: 800 }}>I</span>
             </div>
-            <h1 className="text-3xl font-heading font-bold">
-              INKSTONE <span className="text-primary-500">MEDIA</span>
+            <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, fontWeight: 800, margin: 0, color: headingColor, transition: 'color .3s' }}>
+              INKSTONE <span style={{ color: '#16a34a' }}>MEDIA</span>
             </h1>
           </div>
-          <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 800, marginBottom: 8, color: headingColor, transition: 'color .3s' }}>
             Admin Login
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p style={{ fontSize: 15, color: subText, transition: 'color .3s' }}>
             Enter your credentials to access the dashboard
           </p>
         </div>
 
-        <div className="card p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Login Card */}
+        <div style={{ background: cardBg, borderRadius: 24, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,.12)', border: `1px solid ${cardBorder}`, transition: 'background .3s, border-color .3s' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Error */}
             {error && (
-              <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
+              <div style={{ padding: 16, background: isDark ? '#450a0a' : '#fee2e2', border: `1px solid ${isDark ? '#b91c1c' : '#fca5a5'}`, borderRadius: 12, color: isDark ? '#fca5a5' : '#dc2626', fontSize: 14, fontWeight: 600 }}>
                 {error}
               </div>
             )}
 
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-2">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input pl-10"
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
+                Email Address
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                   placeholder="admin@inkstone.com"
-                  required
-                />
+                  style={{ width: '100%', padding: '12px 12px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', background: inputBg, color: inputColor }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input pl-10 pr-10"
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
                   placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  title={showPassword ? "Hide password" : "Show password"}
-                >
+                  style={{ width: '100%', padding: '12px 44px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', background: inputBg, color: inputColor }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: iconColor, transition: '.2s' }}>
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between mt-2">
-           <Link 
-           to="/admin/forgot-password"
-            className="text-sm text-primary-500 hover:text-primary-600"
-           >
-             Forgot password?
-            </Link>
-             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full flex items-center justify-center space-x-2"
-            >
+
+            {/* Forgot Password */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Link to="/admin/forgot-password"
+                style={{ fontSize: 14, color: '#16a34a', fontWeight: 600, textDecoration: 'none', transition: '.2s' }}>
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* Submit */}
+            <button type="submit" disabled={loading}
+              style={{ width: '100%', padding: '14px', background: loading ? '#9ca3af' : 'linear-gradient(to right,#16a34a,#15803d)', color: 'white', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: loading ? 'none' : '0 4px 16px rgba(22,163,74,.35)', transition: '.2s', fontFamily: 'DM Sans,sans-serif' }}
+              onMouseEnter={e => !loading && (e.currentTarget.style.transform = 'translateY(-1px)', e.currentTarget.style.boxShadow = '0 6px 20px rgba(22,163,74,.4)')}
+              onMouseLeave={e => !loading && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 16px rgba(22,163,74,.35)')}>
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div style={{ width: 20, height: 20, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
                   <span>Logging in...</span>
                 </>
               ) : (
@@ -120,16 +154,22 @@ const AdminLogin = () => {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+          {/* Sign Up Link */}
+          <p style={{ textAlign: 'center', fontSize: 14, marginTop: 24, color: subText }}>
             Don't have an account?{' '}
-            <Link to="/admin/signup" className="text-primary-500 hover:text-primary-600 font-medium">
+            <Link to="/admin/signup"
+              style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', transition: '.2s' }}>
               Sign up here
             </Link>
           </p>
         </div>
 
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          <Link to="/" className="hover:text-primary-500">
+        {/* Back to Home */}
+        <p style={{ textAlign: 'center', fontSize: 14, marginTop: 24 }}>
+          <Link to="/"
+            style={{ color: subText, textDecoration: 'none', transition: '.2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#16a34a'}
+            onMouseLeave={e => e.currentTarget.style.color = subText}>
             ← Back to Home
           </Link>
         </p>
