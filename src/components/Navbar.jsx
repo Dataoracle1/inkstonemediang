@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Sun, Moon, User, Mail } from 'lucide-react';
@@ -166,6 +167,30 @@ const Navbar = () => {
           max-height: 240px;
           overflow-y: auto;
         }
+
+        /* ── Mobile logo sizing ── */
+        .ink-logo-img {
+          width: 42px;
+          height: 42px;
+        }
+        .ink-logo-title {
+          font-size: 23px;
+        }
+        .ink-logo-gap {
+          gap: 14px;
+        }
+        @media (max-width: 640px) {
+          .ink-logo-img {
+            width: 28px;
+            height: 28px;
+          }
+          .ink-logo-title {
+            font-size: 16px;
+          }
+          .ink-logo-gap {
+            gap: 8px;
+          }
+        }
       `}</style>
 
       <nav className="bg-white dark:bg-gray-900 sticky top-0 z-50"
@@ -202,16 +227,17 @@ const Navbar = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 0' }}>
 
             {/* Logo */}
-            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none', flexShrink: 0 }}>
+            <Link to="/" className="ink-logo-gap" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
               <img
                 src="https://i.postimg.cc/Rh7CTkm7/inkstonelogo-green.png"
                 alt="Inkstone Media"
-                style={{ width: 42, height: 42, objectFit: 'contain' }}
+                className="ink-logo-img"
+                style={{ objectFit: 'contain' }}
                 loading="lazy"
               />
               <div>
-                <h1 className="text-gray-900 dark:text-white"
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: 23, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>
+                <h1 className="ink-logo-title text-gray-900 dark:text-white"
+                  style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>
                   INKSTONE <span style={{ color: '#16a34a' }}>MEDIA</span>
                 </h1>
                 <p className="hidden sm:block text-gray-500 dark:text-gray-400"
