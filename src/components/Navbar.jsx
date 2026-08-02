@@ -1,11 +1,9 @@
-
-
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Sun, Moon, User, Mail } from 'lucide-react';
+import { Menu, X, Search, User, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useInkTheme, ThemeToggleButton } from '../context/ThemeContext';
 import { newsletterAPI } from '../utils/api';
 import { categoryPath } from '../utils/categoryUtils';
 
@@ -38,29 +36,21 @@ const ALL_CATEGORIES = [
   'Other',
 ];
 
-// Categories shown in the desktop nav bar (keep it short)
+// Categories shown in the desktop pill row (keep it short, like the mockup's "All Desks / World / Business…")
 const DESKTOP_NAV_CATEGORIES = ['Breaking News', 'Sports', 'Entertainment', 'Technology', 'Politics'];
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [email, setEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
 
+  const { isDark } = useInkTheme();
   const { isAuthenticated, admin } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDark]);
 
   // Close mobile menu on resize to desktop
   useEffect(() => {
@@ -69,14 +59,6 @@ const Navbar = () => {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const toggleDarkMode = useCallback(() => {
-    setIsDark(prev => {
-      const next = !prev;
-      localStorage.setItem('darkMode', String(next));
-      return next;
-    });
   }, []);
 
   const handleSearch = useCallback((e) => {
@@ -111,320 +93,254 @@ const Navbar = () => {
     const date = new Date();
     return {
       long: date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-      short: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      short: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     };
   }, []);
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap');
-        @keyframes slideDown { from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);} }
-        @keyframes scaleIn   { from{opacity:0;transform:scale(.93);}to{opacity:1;transform:scale(1);} }
-        @keyframes fadeIn    { from{opacity:0;}to{opacity:1;} }
-
-        .ink-nav-link {
-          font-size: 14px; font-weight: 800; font-family: 'DM Sans', sans-serif;
-          padding: 9px 12px; border-radius: 10px; text-decoration: none;
-          transition: color .2s, background .2s; display: block; letter-spacing: 0.1px;
-          white-space: nowrap;
+        .ink-nav-pill {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+          padding: 7px 14px; border-radius: 999px; border: 1px solid var(--ink-rule);
+          white-space: nowrap; color: var(--ink-ink-soft); background: transparent;
+          text-decoration: none; transition: background .15s, color .15s, border-color .15s;
         }
-        .ink-search-bar { animation: slideDown .3s ease; }
-        .ink-modal      { animation: scaleIn .22s ease; }
-        .ink-backdrop   { animation: fadeIn .2s ease; }
-
-        /* Mobile menu — hidden on desktop (≥1024px) */
-        .ink-mobile-menu {
-          display: block;
-          animation: slideDown .3s ease;
+        .ink-nav-pill:hover, .ink-nav-pill.active {
+          background: var(--ink-ink); color: var(--ink-paper); border-color: var(--ink-ink);
         }
+        .ink-nav-pill:focus-visible { outline: 2px solid var(--ink-stamp); outline-offset: 2px; }
+
+        .ink-cats-row {
+          display: flex; gap: 8px; overflow-x: auto; padding: 12px 18px;
+          border-bottom: 1px solid var(--ink-rule); scrollbar-width: none;
+        }
+        .ink-cats-row::-webkit-scrollbar { display: none; }
+
+        .ink-mobile-menu { animation: ink-slideDown .3s ease; }
         @media (min-width: 1024px) {
-          .ink-mobile-menu { display: none !important; }
-          .ink-mobile-toggle { display: none !important; }
+          .ink-mobile-menu, .ink-mobile-toggle { display: none !important; }
         }
+        .ink-desktop-actions { display: none; }
+        @media (min-width: 1024px) { .ink-desktop-actions { display: flex; } }
 
-        /* Desktop nav — hidden on mobile (<1024px) */
-        .ink-desktop-nav {
-          display: none;
-        }
-        @media (min-width: 1024px) {
-          .ink-desktop-nav { display: flex; }
-        }
+        .ink-mobile-cats { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow-y: auto; }
 
-        /* Desktop actions — hidden on mobile */
-        .ink-desktop-actions {
-          display: none;
-        }
-        @media (min-width: 1024px) {
-          .ink-desktop-actions { display: flex; }
-        }
-
-        /* Mobile category scroll */
-        .ink-mobile-cats {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          max-height: 240px;
-          overflow-y: auto;
-        }
-
-        /* ── Mobile logo sizing ── */
-        .ink-logo-img {
-          width: 42px;
-          height: 42px;
-        }
-        .ink-logo-title {
-          font-size: 23px;
-        }
-        .ink-logo-gap {
-          gap: 14px;
-        }
-        @media (max-width: 640px) {
-          .ink-logo-img {
-            width: 28px;
-            height: 28px;
-          }
-          .ink-logo-title {
-            font-size: 16px;
-          }
-          .ink-logo-gap {
-            gap: 8px;
-          }
-        }
+        .ink-search-bar { animation: ink-slideDown .3s ease; }
+        .ink-modal { animation: ink-scaleIn .22s ease; }
+        .ink-backdrop { animation: ink-fadeIn .2s ease; }
       `}</style>
 
-      <nav className="bg-white dark:bg-gray-900 sticky top-0 z-50"
-        style={{ fontFamily: "'DM Sans', sans-serif", boxShadow: '0 2px 16px rgba(0,0,0,.08)' }}>
-
-        {/* ── Top Bar ── */}
-        <div className="bg-gray-900 dark:bg-black text-white" style={{ padding: '10px 0' }}>
-          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="hidden sm:block" style={{ fontSize: 14, fontWeight: 700, letterSpacing: .3 }}>{currentDate.long}</span>
-            <span className="sm:hidden" style={{ fontSize: 14, fontWeight: 700 }}>{currentDate.short}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <button
-                onClick={toggleDarkMode}
-                aria-label="Toggle dark mode"
-                style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(255,255,255,.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white', transition: 'background .2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.22)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.1)'}
+      <nav
+        className="sticky top-0"
+        style={{
+          zIndex: 50,
+          background: 'var(--ink-paper)',
+          borderBottom: '3px solid var(--ink-ink)',
+          transition: 'background .35s ease, border-color .35s ease',
+        }}
+      >
+        {/* ── Top strip: date + auth + theme toggle ── */}
+        <div
+          className="ink-mono"
+          style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '10px 18px',
+            fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase',
+            color: 'var(--ink-ink-soft)',
+            borderBottom: '1px solid var(--ink-rule)',
+            maxWidth: 1280, margin: '0 auto', width: '100%', boxSizing: 'border-box',
+          }}
+        >
+          <span className="hidden sm:inline">{currentDate.long}</span>
+          <span className="sm:hidden">{currentDate.short}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {isAuthenticated && (
+              <Link
+                to="/admin/dashboard"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-stamp)', textDecoration: 'none', fontWeight: 700 }}
               >
-                {isDark ? <Sun size={17} /> : <Moon size={17} />}
-              </button>
-              {isAuthenticated && (
-                <Link to="/admin/dashboard" className="hover:text-green-400 transition-colors"
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'white', textDecoration: 'none', fontSize: 14, fontWeight: 800 }}>
-                  <User size={17} />
-                  <span className="hidden sm:inline">{admin?.name}</span>
-                </Link>
-              )}
-            </div>
+                <User size={13} />
+                <span className="hidden sm:inline">{admin?.name}</span>
+              </Link>
+            )}
+            <ThemeToggleButton />
           </div>
         </div>
 
-        {/* ── Main Nav Row ── */}
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 0' }}>
-
-            {/* Logo */}
-            <Link to="/" className="ink-logo-gap" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
-              <img
-                src="https://i.postimg.cc/Rh7CTkm7/inkstonelogo-green.png"
-                alt="Inkstone Media"
-                className="ink-logo-img"
-                style={{ objectFit: 'contain' }}
-                loading="lazy"
-              />
-              <div>
-                <h1 className="ink-logo-title text-gray-900 dark:text-white"
-                  style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>
-                  INKSTONE <span style={{ color: '#16a34a' }}>MEDIA</span>
-                </h1>
-                <p className="hidden sm:block text-gray-500 dark:text-gray-400"
-                  style={{ fontSize: 11, fontWeight: 700, letterSpacing: .8 }}>
-                  Breaking News • Sports • Entertainment
-                </p>
-              </div>
-            </Link>
-
-            {/* ── Desktop Nav Links ── */}
-            <div className="ink-desktop-nav" style={{ alignItems: 'center', gap: 2, overflowX: 'auto' }}>
-              <Link to="/" className="ink-nav-link text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                Home
-              </Link>
-              {DESKTOP_NAV_CATEGORIES.map(cat => (
-                <Link key={cat} to={categoryPath(cat)}
-                  className="ink-nav-link text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  {cat}
-                </Link>
-              ))}
-              <Link to="/contact" className="ink-nav-link text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                Contact
-              </Link>
-            </div>
-
-            {/* ── Desktop Actions ── */}
-            <div className="ink-desktop-actions" style={{ alignItems: 'center', gap: 14, flexShrink: 0 }}>
-              <button
-                onClick={() => setShowSearch(s => !s)}
-                className="text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                style={{ width: 42, height: 42, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <Search size={19} />
-              </button>
-              <button
-                onClick={() => setShowSubscribeModal(true)}
-                style={{ padding: '11px 24px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 11, fontWeight: 800, fontSize: 14, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', boxShadow: '0 4px 14px rgba(22,163,74,.35)', transition: 'transform .2s', letterSpacing: .3, whiteSpace: 'nowrap' }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                Subscribe
-              </button>
-            </div>
-
-            {/* ── Mobile Toggle (hidden on desktop via CSS) ── */}
-            <button
-              className="ink-mobile-toggle text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              style={{ width: 44, height: 44, borderRadius: 11, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              aria-label="Toggle menu"
+        {/* ── Masthead ── */}
+        <div style={{ padding: '26px 18px 16px', textAlign: 'center', maxWidth: 1280, margin: '0 auto' }}>
+          <Link to="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
+            <h1
+              className="ink-serif"
+              style={{ fontWeight: 600, fontSize: 'clamp(34px, 7vw, 50px)', lineHeight: .9, margin: 0, letterSpacing: '-.02em', color: 'var(--ink-ink)' }}
             >
-              {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+              SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em>
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8 }}>
+              <span style={{ width: 26, height: 1, background: 'var(--ink-rule)' }} />
+              <span className="ink-mono" style={{ fontSize: 10, letterSpacing: '.3em', color: 'var(--ink-ink-soft)', fontWeight: 600 }}>MEDIA</span>
+              <span style={{ width: 26, height: 1, background: 'var(--ink-rule)' }} />
+            </div>
+            <div className="ink-mono" style={{ marginTop: 10, fontSize: 11, color: 'var(--ink-ink-soft)', letterSpacing: '.05em' }}>
+              Breaking News &middot; Sports &middot; Entertainment
+            </div>
+          </Link>
+        </div>
+
+        {/* ── Nav pills + actions row ── */}
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 18px 14px', display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <div className="ink-cats-row" style={{ padding: 0, border: 'none', flex: '1 1 auto', minWidth: 0 }}>
+            <Link to="/" className="ink-nav-pill">Home</Link>
+            {DESKTOP_NAV_CATEGORIES.map(cat => (
+              <Link key={cat} to={categoryPath(cat)} className="ink-nav-pill">{cat}</Link>
+            ))}
+            <Link to="/contact" className="ink-nav-pill">Contact</Link>
+          </div>
+
+          <div className="ink-desktop-actions" style={{ alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <button
+              onClick={() => setShowSearch(s => !s)}
+              className="ink-mono"
+              style={{
+                width: 38, height: 38, borderRadius: '50%', border: '1px solid var(--ink-rule)',
+                background: 'transparent', color: 'var(--ink-ink-soft)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '.15s',
+              }}
+            >
+              <Search size={16} />
+            </button>
+            <button onClick={() => setShowSubscribeModal(true)} className="ink-btn ink-btn-stamp">
+              <Mail size={13} />
+              Subscribe
             </button>
           </div>
 
-          {/* ── Desktop Search Bar ── */}
-          {showSearch && (
-            <div className="ink-search-bar border-t border-gray-100 dark:border-gray-800"
-              style={{ paddingTop: 18, paddingBottom: 18, display: 'none' }}
-              ref={el => { if (el) el.style.display = 'block'; }}>
-              <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10 }}>
-                <input
-                  type="text" value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search articles..." autoFocus
-                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500"
-                  style={{ flex: 1, padding: '11px 18px', borderWidth: 1.5, borderStyle: 'solid', borderRadius: 11, fontSize: 15, fontWeight: 600, outline: 'none', fontFamily: 'DM Sans, sans-serif' }}
-                />
-                <button type="submit"
-                  style={{ padding: '11px 26px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 11, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
-                  Search
-                </button>
-                <button type="button" onClick={() => setShowSearch(false)}
-                  className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  style={{ padding: '11px 22px', borderWidth: 1.5, borderStyle: 'solid', borderRadius: 11, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
-                  Cancel
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* ── Mobile Menu (hidden on desktop via CSS) ── */}
-          {isMenuOpen && (
-            <div className="ink-mobile-menu border-t border-gray-100 dark:border-gray-800"
-              style={{ paddingTop: 16, paddingBottom: 18 }}>
-
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <input
-                  type="text" value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search articles..."
-                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 placeholder-gray-400"
-                  style={{ flex: 1, padding: '11px 15px', borderWidth: 1.5, borderStyle: 'solid', borderRadius: 11, fontSize: 15, fontWeight: 600, outline: 'none', fontFamily: 'DM Sans, sans-serif' }}
-                />
-                <button type="submit"
-                  style={{ width: 44, height: 44, background: '#16a34a', color: 'white', border: 'none', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                  <Search size={19} />
-                </button>
-              </form>
-
-              {/* Home + All Categories */}
-              <div className="ink-mobile-cats">
-                <Link to="/" onClick={() => setIsMenuOpen(false)}
-                  className="ink-nav-link text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  🏠 Home
-                </Link>
-                {ALL_CATEGORIES.map(cat => (
-                  <Link key={cat} to={categoryPath(cat)} onClick={() => setIsMenuOpen(false)}
-                    className="ink-nav-link text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                    {cat}
-                  </Link>
-                ))}
-                <Link to="/contact" onClick={() => setIsMenuOpen(false)}
-                  className="ink-nav-link text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  Contact
-                </Link>
-              </div>
-
-              {/* Subscribe Button */}
-              <button
-                onClick={() => { setShowSubscribeModal(true); setIsMenuOpen(false); }}
-                style={{ marginTop: 12, padding: '13px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 11, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', width: '100%', letterSpacing: .3 }}>
-                Subscribe to Newsletter
-              </button>
-            </div>
-          )}
+          <button
+            className="ink-mobile-toggle"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+            style={{
+              width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--ink-rule)',
+              background: 'transparent', color: 'var(--ink-ink)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}
+          >
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
+
+        {/* ── Desktop search bar ── */}
+        {showSearch && (
+          <div className="ink-search-bar" style={{ borderTop: '1px solid var(--ink-rule)', padding: '14px 18px', maxWidth: 1280, margin: '0 auto' }}>
+            <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search articles..." autoFocus
+                className="ink-mono"
+                style={{
+                  flex: 1, padding: '10px 16px', border: '1px solid var(--ink-rule)', borderRadius: 4,
+                  fontSize: 13, outline: 'none', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)',
+                }}
+              />
+              <button type="submit" className="ink-btn ink-btn-stamp">Search</button>
+              <button type="button" onClick={() => setShowSearch(false)} className="ink-btn">Cancel</button>
+            </form>
+          </div>
+        )}
+
+        {/* ── Mobile menu ── */}
+        {isMenuOpen && (
+          <div className="ink-mobile-menu" style={{ borderTop: '1px solid var(--ink-rule)', padding: '16px 18px 18px' }}>
+            <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <input
+                type="text" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search articles..."
+                className="ink-mono"
+                style={{ flex: 1, padding: '10px 14px', border: '1px solid var(--ink-rule)', borderRadius: 4, fontSize: 13, outline: 'none', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)' }}
+              />
+              <button type="submit" className="ink-btn ink-btn-stamp" style={{ flexShrink: 0 }}>
+                <Search size={16} />
+              </button>
+            </form>
+
+            <div className="ink-mobile-cats">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="ink-nav-pill" style={{ textAlign: 'left' }}>Home</Link>
+              {ALL_CATEGORIES.map(cat => (
+                <Link key={cat} to={categoryPath(cat)} onClick={() => setIsMenuOpen(false)} className="ink-nav-pill" style={{ textAlign: 'left' }}>
+                  {cat}
+                </Link>
+              ))}
+              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="ink-nav-pill" style={{ textAlign: 'left' }}>Contact</Link>
+            </div>
+
+            <button
+              onClick={() => { setShowSubscribeModal(true); setIsMenuOpen(false); }}
+              className="ink-btn ink-btn-stamp"
+              style={{ marginTop: 12, width: '100%', justifyContent: 'center', padding: '12px' }}
+            >
+              Subscribe to Newsletter
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* ── Subscribe Modal ── */}
       {showSubscribeModal && (
-        <div className="ink-backdrop"
+        <div
+          className="ink-backdrop"
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-          onClick={() => setShowSubscribeModal(false)}>
-          <div className="ink-modal bg-white dark:bg-gray-900"
-            style={{ borderRadius: 24, boxShadow: '0 24px 64px rgba(0,0,0,.25)', maxWidth: 480, width: '100%', padding: 36 }}
-            onClick={e => e.stopPropagation()}>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          onClick={() => setShowSubscribeModal(false)}
+        >
+          <div
+            className="ink-modal"
+            style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, boxShadow: '0 24px 64px rgba(0,0,0,.25)', maxWidth: 460, width: '100%', padding: 32 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: 13, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Mail color="#16a34a" size={24} />
+                <div style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--ink-stamp)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Mail color="var(--ink-stamp)" size={20} />
                 </div>
-                <h3 className="text-gray-900 dark:text-white"
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, margin: 0 }}>
-                  Subscribe
-                </h3>
+                <h3 className="ink-serif" style={{ fontSize: 24, fontWeight: 600, margin: 0, color: 'var(--ink-ink)' }}>Subscribe</h3>
               </div>
               <button
                 onClick={() => setShowSubscribeModal(false)}
-                className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                style={{ width: 38, height: 38, borderRadius: 10, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <X size={20} />
+                style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--ink-rule)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink-ink-soft)' }}
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <p className="text-gray-500 dark:text-gray-400"
-              style={{ fontSize: 15, fontWeight: 600, marginBottom: 24, lineHeight: 1.7 }}>
-              Get the latest news and updates delivered to your inbox. Stay informed with INKSTONE MEDIA.
+            <p style={{ fontSize: 14, color: 'var(--ink-ink-soft)', marginBottom: 22, lineHeight: 1.6 }}>
+              Get the wire delivered to your inbox. Stay informed with SYDLINES MEDIA.
             </p>
 
-            <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label className="text-gray-700 dark:text-gray-300"
-                  style={{ display: 'block', fontSize: 13, fontWeight: 800, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .5 }}>
+                <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-ink-soft)' }}>
                   Email Address
                 </label>
                 <input
                   type="email" value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="your@email.com" required disabled={isSubscribing}
-                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 placeholder-gray-400 focus:border-green-500"
-                  style={{ width: '100%', padding: '13px 17px', borderWidth: 1.5, borderStyle: 'solid', borderRadius: 12, fontSize: 15, fontWeight: 600, outline: 'none', fontFamily: 'DM Sans, sans-serif', boxSizing: 'border-box', opacity: isSubscribing ? .6 : 1, transition: 'border-color .2s' }}
+                  style={{
+                    width: '100%', padding: '11px 15px', border: '1px solid var(--ink-rule)', borderRadius: 4,
+                    fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--ink-paper-dim)',
+                    color: 'var(--ink-ink)', opacity: isSubscribing ? .6 : 1,
+                  }}
                 />
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button type="submit" disabled={isSubscribing}
-                  style={{ flex: 1, padding: '14px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', boxShadow: '0 4px 16px rgba(22,163,74,.35)', opacity: isSubscribing ? .7 : 1, transition: 'transform .2s', letterSpacing: .3 }}
-                  onMouseEnter={e => !isSubscribing && (e.currentTarget.style.transform = 'translateY(-1px)')}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                <button type="submit" disabled={isSubscribing} className="ink-btn ink-btn-stamp" style={{ flex: 1, justifyContent: 'center', padding: '12px' }}>
                   {isSubscribing ? 'Subscribing...' : 'Subscribe Now'}
                 </button>
-                <button type="button" onClick={() => setShowSubscribeModal(false)} disabled={isSubscribing}
-                  className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  style={{ padding: '14px 26px', borderWidth: 1.5, borderStyle: 'solid', borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                <button type="button" onClick={() => setShowSubscribeModal(false)} disabled={isSubscribing} className="ink-btn" style={{ justifyContent: 'center', padding: '12px 20px' }}>
                   Cancel
                 </button>
               </div>

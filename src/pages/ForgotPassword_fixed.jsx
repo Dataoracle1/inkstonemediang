@@ -8,10 +8,8 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-
   const getApiUrl = () => {
     const baseUrl = import.meta.env.VITE_API_URL;
-    
     return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
   };
 
@@ -23,14 +21,10 @@ const ForgotPassword = () => {
     try {
       const response = await fetch(`${getApiUrl()}/auth/forgot-password`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-
       const data = await response.json();
-
       if (data.success) {
         setSuccess(true);
       } else {
@@ -44,133 +38,115 @@ const ForgotPassword = () => {
     }
   };
 
+  const Wrapper = ({ children }) => (
+    <div style={{ minHeight: '100vh', background: 'var(--ink-wire)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <style>{`@keyframes ink-spin { to { transform: rotate(360deg); } } .ink-auth-input:focus { border-color: var(--ink-stamp) !important; }`}</style>
+      <div style={{ maxWidth: 420, width: '100%' }}>{children}</div>
+    </div>
+  );
+
+  const Header = () => (
+    <div style={{ textAlign: 'center', marginBottom: 28 }}>
+      <h1 className="ink-serif" style={{ fontSize: 30, fontWeight: 600, margin: 0, lineHeight: .9, color: '#eeeadf' }}>
+        SYD<em style={{ fontStyle: 'italic', color: 'var(--ink-stamp)' }}>LINES</em>
+      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+        <span style={{ width: 20, height: 1, background: 'rgba(238,234,223,.25)' }} />
+        <span className="ink-mono" style={{ fontSize: 10, letterSpacing: '.3em', color: 'rgba(238,234,223,.55)', fontWeight: 600 }}>MEDIA</span>
+        <span style={{ width: 20, height: 1, background: 'rgba(238,234,223,.25)' }} />
+      </div>
+    </div>
+  );
+
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center space-x-2 mb-4">
-              <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">I</span>
-              </div>
-              <h1 className="text-3xl font-heading font-bold">
-                INKSTONE <span className="text-primary-500">MEDIA</span>
-              </h1>
-            </div>
+      <Wrapper>
+        <Header />
+        <div style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, padding: 32, textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, border: '1.5px solid var(--ink-wire-bright)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+            <CheckCircle color="var(--ink-wire-bright)" size={28} />
           </div>
-
-          <div className="card p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
-              <CheckCircle className="text-green-600 dark:text-green-400" size={32} />
-            </div>
-            
-            <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white mb-4">
-              Check Your Email
-            </h2>
-            
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              If an account exists with <strong>{email}</strong>, you will receive a password reset link shortly.
+          <h2 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--ink-ink)', marginBottom: 14 }}>
+            Check Your Email
+          </h2>
+          <p style={{ color: 'var(--ink-ink-soft)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>
+            If an account exists with <strong>{email}</strong>, you will receive a password reset link shortly.
+          </p>
+          <div style={{ padding: 14, background: 'var(--ink-paper-dim)', border: '1px solid var(--ink-rule)', borderRadius: 2, marginBottom: 20 }}>
+            <p className="ink-mono" style={{ fontSize: 12, color: 'var(--ink-ink-soft)' }}>
+              Check your spam folder if you don't see the email within a few minutes.
             </p>
-            
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-6">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
-                💡 Check your spam folder if you don't see the email within a few minutes.
-              </p>
-            </div>
-
-            <Link
-              to="/admin/login"
-              className="btn-primary w-full flex items-center justify-center space-x-2"
-            >
-              <ArrowLeft size={20} />
-              <span>Back to Login</span>
-            </Link>
           </div>
+          <Link to="/admin/login" className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: 12 }}>
+            <ArrowLeft size={16} />
+            <span>Back to Login</span>
+          </Link>
         </div>
-      </div>
+      </Wrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">I</span>
-            </div>
-            <h1 className="text-3xl font-heading font-bold">
-              INKSTONE <span className="text-primary-500">MEDIA</span>
-            </h1>
-          </div>
-          <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">
-            Forgot Password?
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Enter your email to receive a password reset link
-          </p>
-        </div>
-
-        <div className="card p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input pl-10"
-                  placeholder="admin@inkstone.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full flex items-center justify-center space-x-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Sending...</span>
-                </>
-              ) : (
-                <>
-                  <Mail size={20} />
-                  <span>Send Reset Link</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              to="/admin/login"
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 inline-flex items-center space-x-1"
-            >
-              <ArrowLeft size={16} />
-              <span>Back to Login</span>
-            </Link>
-          </div>
-        </div>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          <Link to="/" className="hover:text-primary-500">
-            ← Back to Home
-          </Link>
+    <Wrapper>
+      <Header />
+      <div style={{ textAlign: 'center', marginBottom: 22 }}>
+        <h2 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: '#eeeadf' }}>Forgot Password?</h2>
+        <p style={{ color: 'rgba(238,234,223,.65)', marginTop: 8, fontSize: 14 }}>
+          Enter your email to receive a password reset link
         </p>
       </div>
-    </div>
+
+      <div style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, padding: 32 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {error && (
+            <div style={{ padding: 14, background: 'var(--ink-stamp-dim)', border: '1px solid var(--ink-stamp)', borderRadius: 2, color: 'var(--ink-stamp)', fontSize: 13, fontWeight: 600 }}>
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
+              Email Address
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
+              <input
+                type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                placeholder="admin@sydlines.com" className="ink-auth-input"
+                style={{ width: '100%', padding: '12px 12px 12px 42px', border: '1px solid var(--ink-rule)', borderRadius: 2, fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)' }}
+              />
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: 13, opacity: loading ? .7 : 1 }}>
+            {loading ? (
+              <>
+                <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,.5)', borderTopColor: 'white', borderRadius: '50%', animation: 'ink-spin .8s linear infinite' }} />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <Mail size={16} />
+                <span>Send Reset Link</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        <div style={{ marginTop: 22, textAlign: 'center' }}>
+          <Link to="/admin/login" className="ink-mono" style={{ fontSize: 12, color: 'var(--ink-ink-soft)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <ArrowLeft size={14} />
+            <span>Back to Login</span>
+          </Link>
+        </div>
+      </div>
+
+      <p style={{ textAlign: 'center', fontSize: 13, marginTop: 20 }}>
+        <Link to="/" className="ink-mono" style={{ color: 'rgba(238,234,223,.6)', textDecoration: 'none' }}>
+          &larr; Back to Home
+        </Link>
+      </p>
+    </Wrapper>
   );
 };
 

@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Mail, X } from 'lucide-react';
@@ -21,7 +19,7 @@ const Footer = () => {
     }
     try {
       const response = await newsletterAPI.subscribe(email.trim());
-      showToast(response.data.message || 'Please check your email to confirm subscription! 🎉', 'success');
+      showToast(response.data.message || 'Please check your email to confirm subscription!', 'success');
       setEmail('');
       setShowSubscribeModal(false);
     } catch (error) {
@@ -37,55 +35,55 @@ const Footer = () => {
       { name: 'Contact', path: '/contact' },
       { name: 'Privacy Policy', path: '/privacy' },
     ],
-    // Category paths now use slugs via categoryPath()
     'Categories': [
       { name: 'Breaking News', path: categoryPath('Breaking News') },
-      { name: 'Sports',        path: categoryPath('Sports') },
+      { name: 'Sports', path: categoryPath('Sports') },
       { name: 'Entertainment', path: categoryPath('Entertainment') },
-      { name: 'Technology',    path: categoryPath('Technology') },
+      { name: 'Technology', path: categoryPath('Technology') },
     ],
     'Follow Us': [
-      { name: 'Facebook',  icon: Facebook,  url: 'https://facebook.com/inkstonemedia' },
-      { name: 'Twitter',   icon: Twitter,   url: 'https://twitter.com/inkstonemedia' },
-      { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/inkstonemedia' },
-      { name: 'YouTube',   icon: Youtube,   url: 'https://youtube.com/@inkstonemedia' },
-    ]
+      { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/sydlinesmedia' },
+      { name: 'Twitter', icon: Twitter, url: 'https://twitter.com/sydlinesmedia' },
+      { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/sydlinesmedia' },
+      { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@sydlinesmedia' },
+    ],
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
-        @keyframes scaleIn { from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);} }
-        @keyframes fadeIn  { from{opacity:0;}to{opacity:1;} }
-        .footer-link { color:#9ca3af; font-size:14px; text-decoration:none; transition:.2s; display:block; padding:6px 0; }
-        .footer-link:hover { color:#16a34a; }
-        .social-btn {
-          width:44px; height:44px; border-radius:12px; display:flex; align-items:center;
-          justify-content:center; background:#1a2a1f; transition:.2s; text-decoration:none; color:#9ca3af;
+        .ink-footer-link { color: rgba(238,234,223,.7); font-size: 13px; text-decoration: none; transition: .15s; display: block; padding: 6px 0; font-family: 'IBM Plex Mono', monospace; }
+        .ink-footer-link:hover { color: var(--ink-stamp); }
+        .ink-social-btn {
+          width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center;
+          justify-content: center; border: 1px solid rgba(238,234,223,.2); transition: .2s;
+          text-decoration: none; color: rgba(238,234,223,.7);
         }
-        .social-btn:hover { background:#16a34a; color:white; transform:translateY(-2px); box-shadow:0 8px 20px rgba(22,163,74,.4); }
+        .ink-social-btn:hover { background: var(--ink-stamp); border-color: var(--ink-stamp); color: #fff; transform: translateY(-2px); }
       `}</style>
 
-      <footer style={{ fontFamily: "'DM Sans',sans-serif", background: '#0f1a12', color: '#9ca3af', marginTop: 64 }}>
+      <footer style={{ background: 'var(--ink-wire)', color: 'rgba(238,234,223,.75)', marginTop: 64 }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 40, marginBottom: 40 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 36, marginBottom: 36 }}>
 
             {/* Brand */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <img src="https://i.postimg.cc/Rh7CTkm7/inkstonelogo-green.png" alt="Inkstone Media" style={{ width: 36, height: 36, objectFit: 'contain' }} />
-                <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, color: 'white', lineHeight: 1 }}>
-                  INKSTONE <span style={{ color: '#16a34a' }}>MEDIA</span>
+              <div style={{ marginBottom: 14 }}>
+                <h3 className="ink-serif" style={{ fontSize: 26, fontWeight: 600, color: '#eeeadf', lineHeight: .9, margin: 0 }}>
+                  SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em>
                 </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
+                  <span style={{ width: 18, height: 1, background: 'rgba(238,234,223,.25)' }} />
+                  <span className="ink-mono" style={{ fontSize: 9, letterSpacing: '.28em', color: 'rgba(238,234,223,.55)', fontWeight: 600 }}>MEDIA</span>
+                </div>
               </div>
-              <p style={{ fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
-                Your trusted source for breaking news, sports updates, and entertainment stories from around the world.
+              <p style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 18 }}>
+                Your trusted wire for breaking news, sports, and entertainment stories from around the world.
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 {footerLinks['Follow Us'].map(({ name, icon: Icon, url }) => (
-                  <a key={name} href={url} target="_blank" rel="noopener noreferrer" className="social-btn" title={name}>
-                    <Icon size={18} />
+                  <a key={name} href={url} target="_blank" rel="noopener noreferrer" className="ink-social-btn" title={name}>
+                    <Icon size={16} />
                   </a>
                 ))}
               </div>
@@ -93,21 +91,20 @@ const Footer = () => {
 
             {/* Quick Links */}
             <div>
-              <h4 style={{ color: 'white', fontWeight: 800, marginBottom: 16, fontSize: 16 }}>Quick Links</h4>
+              <h4 className="ink-mono" style={{ color: '#eeeadf', fontWeight: 600, marginBottom: 14, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>Quick Links</h4>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {footerLinks['Quick Links'].map(link => (
-                  <Link key={link.name} to={link.path} className="footer-link">{link.name}</Link>
+                  <Link key={link.name} to={link.path} className="ink-footer-link">{link.name}</Link>
                 ))}
               </div>
             </div>
 
             {/* Categories */}
             <div>
-              <h4 style={{ color: 'white', fontWeight: 800, marginBottom: 16, fontSize: 16 }}>Categories</h4>
+              <h4 className="ink-mono" style={{ color: '#eeeadf', fontWeight: 600, marginBottom: 14, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>Desks</h4>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {footerLinks['Categories'].map(link => (
-                  <Link key={link.name} to={link.path} className="footer-link"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <Link key={link.name} to={link.path} className="ink-footer-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                     {link.name}
                   </Link>
                 ))}
@@ -116,84 +113,76 @@ const Footer = () => {
 
             {/* Newsletter */}
             <div>
-              <h4 style={{ color: 'white', fontWeight: 800, marginBottom: 16, fontSize: 16 }}>Newsletter</h4>
-              <p style={{ fontSize: 14, marginBottom: 16, lineHeight: 1.7 }}>
-                Subscribe to get the latest news delivered to your inbox.
+              <h4 className="ink-mono" style={{ color: '#eeeadf', fontWeight: 600, marginBottom: 14, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>Newsletter</h4>
+              <p style={{ fontSize: 13, marginBottom: 14, lineHeight: 1.7 }}>
+                Subscribe to get the wire delivered to your inbox.
               </p>
-              <button onClick={() => setShowSubscribeModal(true)}
-                style={{ width: '100%', padding: '12px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: '.2s' }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                <Mail size={16} />
+              <button onClick={() => setShowSubscribeModal(true)} className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: '11px' }}>
+                <Mail size={14} />
                 Subscribe
               </button>
             </div>
           </div>
 
           {/* Bottom Bar */}
-          <div style={{ borderTop: '1px solid #1a2a1f', paddingTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <p style={{ fontSize: 14 }}>
-              © {currentYear} <span style={{ color: '#16a34a', fontWeight: 700 }}>INKSTONE MEDIA</span>. All rights reserved.
+          <div style={{ borderTop: '1px solid rgba(238,234,223,.12)', paddingTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+            <p className="ink-mono" style={{ fontSize: 11, letterSpacing: '.05em' }}>
+              &copy; {currentYear} SYDLINES MEDIA &mdash; REPORTED, NOT REPEATED
             </p>
-            <div style={{ display: 'flex', gap: 20, fontSize: 14 }}>
-              <Link to="/terms" className="footer-link" style={{ padding: 0 }}>Terms of Service</Link>
-              <Link to="/privacy" className="footer-link" style={{ padding: 0 }}>Privacy Policy</Link>
-              <Link to="/admin/login" className="footer-link" style={{ padding: 0 }}>Admin Login</Link>
+            <div style={{ display: 'flex', gap: 18 }}>
+              <Link to="/terms" className="ink-footer-link" style={{ padding: 0 }}>Terms of Service</Link>
+              <Link to="/privacy" className="ink-footer-link" style={{ padding: 0 }}>Privacy Policy</Link>
+              <Link to="/admin/login" className="ink-footer-link" style={{ padding: 0 }}>Admin Login</Link>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Subscribe Modal — unchanged */}
+      {/* Subscribe Modal */}
       {showSubscribeModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'fadeIn .2s ease' }}
-          onClick={() => setShowSubscribeModal(false)}>
-          <div className="subscribe-modal" style={{ background: 'white', borderRadius: 24, boxShadow: '0 24px 64px rgba(0,0,0,.2)', maxWidth: 480, width: '100%', padding: 32, animation: 'scaleIn .22s ease' }}
-            onClick={e => e.stopPropagation()}>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setShowSubscribeModal(false)}
+        >
+          <div
+            style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, boxShadow: '0 24px 64px rgba(0,0,0,.2)', maxWidth: 460, width: '100%', padding: 32 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Mail color="#16a34a" size={22} />
+                <div style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--ink-stamp)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Mail color="var(--ink-stamp)" size={20} />
                 </div>
-                <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 800, color: '#0f1a12' }}>
-                  Subscribe
-                </h3>
+                <h3 className="ink-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--ink-ink)', margin: 0 }}>Subscribe</h3>
               </div>
-              <button onClick={() => setShowSubscribeModal(false)}
-                style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280', transition: '.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                onMouseLeave={e => e.currentTarget.style.background = '#f9fafb'}>
-                <X size={20} />
+              <button
+                onClick={() => setShowSubscribeModal(false)}
+                style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--ink-rule)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink-ink-soft)' }}
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <p style={{ fontSize: 15, color: '#6b7280', marginBottom: 24, lineHeight: 1.7 }}>
-              Get the latest news and updates delivered to your inbox. Stay informed with INKSTONE MEDIA.
+            <p style={{ fontSize: 14, color: 'var(--ink-ink-soft)', marginBottom: 22, lineHeight: 1.6 }}>
+              Get the latest news and updates delivered to your inbox. Stay informed with SYDLINES MEDIA.
             </p>
 
-            <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3 }}>
+                <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--ink-ink-soft)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.1em' }}>
                   Email Address
                 </label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required
-                  style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', boxSizing: 'border-box' }}
-                  onFocus={e => e.currentTarget.style.borderColor = '#16a34a'}
-                  onBlur={e => e.currentTarget.style.borderColor = '#e5e7eb'} />
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required
+                  style={{ width: '100%', padding: '11px 15px', border: '1px solid var(--ink-rule)', borderRadius: 4, fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)' }}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button type="submit"
-                  style={{ flex: 1, padding: '13px', background: '#16a34a', color: 'white', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans,sans-serif', boxShadow: '0 4px 16px rgba(22,163,74,.35)', transition: '.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                <button type="submit" className="ink-btn ink-btn-stamp" style={{ flex: 1, justifyContent: 'center', padding: '12px' }}>
                   Subscribe Now
                 </button>
-                <button type="button" onClick={() => setShowSubscribeModal(false)}
-                  style={{ padding: '13px 24px', background: 'white', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'DM Sans,sans-serif', transition: '.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                <button type="button" onClick={() => setShowSubscribeModal(false)} className="ink-btn" style={{ justifyContent: 'center', padding: '12px 20px' }}>
                   Cancel
                 </button>
               </div>

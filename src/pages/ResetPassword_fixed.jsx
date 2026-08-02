@@ -5,7 +5,7 @@ import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -17,23 +17,17 @@ const ResetPassword = () => {
   const [tokenValid, setTokenValid] = useState(false);
   const [userEmail, setUserEmail] = useState('');
 
-  
   const getApiUrl = () => {
     const baseUrl = import.meta.env.VITE_API_URL;
     return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
   };
 
-  useEffect(() => {
-    verifyToken();
-  }, [token]);
+  useEffect(() => { verifyToken(); }, [token]);
 
   const verifyToken = async () => {
     try {
-      const response = await fetch(
-        `${getApiUrl()}/auth/verify-reset-token/${token}`
-      );
+      const response = await fetch(`${getApiUrl()}/auth/verify-reset-token/${token}`);
       const data = await response.json();
-
       if (data.success) {
         setTokenValid(true);
         setUserEmail(data.data.email);
@@ -58,33 +52,22 @@ const ResetPassword = () => {
       setError('Passwords do not match');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
-
     try {
-      const response = await fetch(
-        `${getApiUrl()}/auth/reset-password/${token}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ password, confirmPassword }),
-        }
-      );
-
+      const response = await fetch(`${getApiUrl()}/auth/reset-password/${token}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, confirmPassword }),
+      });
       const data = await response.json();
-
       if (data.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/admin/login');
-        }, 3000);
+        setTimeout(() => navigate('/admin/login'), 3000);
       } else {
         setError(data.message || 'Failed to reset password');
       }
@@ -96,12 +79,33 @@ const ResetPassword = () => {
     }
   };
 
+  const Wrapper = ({ children }) => (
+    <div style={{ minHeight: '100vh', background: 'var(--ink-wire)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <style>{`@keyframes ink-spin { to { transform: rotate(360deg); } } .ink-auth-input:focus { border-color: var(--ink-stamp) !important; }`}</style>
+      <div style={{ maxWidth: 420, width: '100%' }}>{children}</div>
+    </div>
+  );
+
+  const Header = () => (
+    <div style={{ textAlign: 'center', marginBottom: 28 }}>
+      <h1 className="ink-serif" style={{ fontSize: 30, fontWeight: 600, margin: 0, lineHeight: .9, color: '#eeeadf' }}>
+        SYD<em style={{ fontStyle: 'italic', color: 'var(--ink-stamp)' }}>LINES</em>
+      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+        <span style={{ width: 20, height: 1, background: 'rgba(238,234,223,.25)' }} />
+        <span className="ink-mono" style={{ fontSize: 10, letterSpacing: '.3em', color: 'rgba(238,234,223,.55)', fontWeight: 600 }}>MEDIA</span>
+        <span style={{ width: 20, height: 1, background: 'rgba(238,234,223,.25)' }} />
+      </div>
+    </div>
+  );
+
   if (verifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Verifying reset token...</p>
+      <div style={{ minHeight: '100vh', background: 'var(--ink-wire)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 44, height: 44, border: '3px solid rgba(238,234,223,.25)', borderTopColor: 'var(--ink-stamp)', borderRadius: '50%', animation: 'ink-spin .8s linear infinite', margin: '0 auto 16px' }} />
+          <style>{`@keyframes ink-spin{to{transform:rotate(360deg);}}`}</style>
+          <p style={{ color: 'rgba(238,234,223,.7)', fontSize: 14 }}>Verifying reset token...</p>
         </div>
       </div>
     );
@@ -109,201 +113,132 @@ const ResetPassword = () => {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center space-x-2 mb-4">
-              <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">I</span>
-              </div>
-              <h1 className="text-3xl font-heading font-bold">
-                INKSTONE <span className="text-primary-500">MEDIA</span>
-              </h1>
-            </div>
+      <Wrapper>
+        <Header />
+        <div style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, padding: 32, textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, border: '1.5px solid var(--ink-stamp)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+            <AlertCircle color="var(--ink-stamp)" size={28} />
           </div>
-
-          <div className="card p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
-              <AlertCircle className="text-red-600 dark:text-red-400" size={32} />
-            </div>
-            
-            <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white mb-4">
-              Invalid or Expired Link
-            </h2>
-            
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {error || 'This password reset link is invalid or has expired.'}
-            </p>
-
-            <div className="space-y-3">
-              <Link
-                to="/admin/forgot-password"
-                className="btn-primary w-full flex items-center justify-center space-x-2"
-              >
-                <span>Request New Reset Link</span>
-              </Link>
-              
-              <Link
-                to="/admin/login"
-                className="btn-secondary w-full flex items-center justify-center space-x-2"
-              >
-                <span>Back to Login</span>
-              </Link>
-            </div>
+          <h2 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--ink-ink)', marginBottom: 14 }}>Invalid or Expired Link</h2>
+          <p style={{ color: 'var(--ink-ink-soft)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>
+            {error || 'This password reset link is invalid or has expired.'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Link to="/admin/forgot-password" className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: 12 }}>
+              <span>Request New Reset Link</span>
+            </Link>
+            <Link to="/admin/login" className="ink-btn" style={{ width: '100%', justifyContent: 'center', padding: 12 }}>
+              <span>Back to Login</span>
+            </Link>
           </div>
         </div>
-      </div>
+      </Wrapper>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center space-x-2 mb-4">
-              <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">I</span>
-              </div>
-              <h1 className="text-3xl font-heading font-bold">
-                INKSTONE <span className="text-primary-500">MEDIA</span>
-              </h1>
-            </div>
+      <Wrapper>
+        <Header />
+        <div style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, padding: 32, textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, border: '1.5px solid var(--ink-wire-bright)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+            <CheckCircle color="var(--ink-wire-bright)" size={28} />
           </div>
-
-          <div className="card p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
-              <CheckCircle className="text-green-600 dark:text-green-400" size={32} />
-            </div>
-            
-            <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white mb-4">
-              Password Reset Successful!
-            </h2>
-            
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Your password has been reset successfully. You can now login with your new password.
-            </p>
-
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Redirecting to login page in 3 seconds...
-            </p>
-          </div>
+          <h2 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--ink-ink)', marginBottom: 14 }}>Password Reset Successful!</h2>
+          <p style={{ color: 'var(--ink-ink-soft)', marginBottom: 20, fontSize: 14, lineHeight: 1.6 }}>
+            Your password has been reset successfully. You can now login with your new password.
+          </p>
+          <p className="ink-mono" style={{ fontSize: 12, color: 'var(--ink-ink-soft)' }}>
+            Redirecting to login page in 3 seconds...
+          </p>
         </div>
-      </div>
+      </Wrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-900 dark:to-dark-800 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">I</span>
-            </div>
-            <h1 className="text-3xl font-heading font-bold">
-              INKSTONE <span className="text-primary-500">MEDIA</span>
-            </h1>
-          </div>
-          <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">
-            Reset Your Password
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Enter your new password for <strong>{userEmail}</strong>
-          </p>
-        </div>
-
-        <div className="card p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">New Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input pl-10 pr-10"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  title={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Confirm New Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input pl-10 pr-10"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  title={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full flex items-center justify-center space-x-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Resetting password...</span>
-                </>
-              ) : (
-                <>
-                  <Lock size={20} />
-                  <span>Reset Password</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              to="/admin/login"
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500"
-            >
-              Back to Login
-            </Link>
-          </div>
-        </div>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          <Link to="/" className="hover:text-primary-500">
-            ← Back to Home
-          </Link>
+    <Wrapper>
+      <Header />
+      <div style={{ textAlign: 'center', marginBottom: 22 }}>
+        <h2 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: '#eeeadf' }}>Reset Your Password</h2>
+        <p style={{ color: 'rgba(238,234,223,.65)', marginTop: 8, fontSize: 14 }}>
+          Enter your new password for <strong>{userEmail}</strong>
         </p>
       </div>
-    </div>
+
+      <div style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, padding: 32 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {error && (
+            <div style={{ padding: 14, background: 'var(--ink-stamp-dim)', border: '1px solid var(--ink-stamp)', borderRadius: 2, color: 'var(--ink-stamp)', fontSize: 13, fontWeight: 600 }}>
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
+              New Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
+              <input
+                type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
+                placeholder="••••••••" className="ink-auth-input"
+                style={{ width: '100%', padding: '12px 42px 12px 42px', border: '1px solid var(--ink-rule)', borderRadius: 2, fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)' }}
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-ink-soft)' }}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--ink-ink-soft)', marginTop: 4 }}>Minimum 6 characters</p>
+          </div>
+
+          <div>
+            <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
+              Confirm New Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required
+                placeholder="••••••••" className="ink-auth-input"
+                style={{ width: '100%', padding: '12px 42px 12px 42px', border: '1px solid var(--ink-rule)', borderRadius: 2, fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)' }}
+              />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-ink-soft)' }}>
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: 13, opacity: loading ? .7 : 1 }}>
+            {loading ? (
+              <>
+                <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,.5)', borderTopColor: 'white', borderRadius: '50%', animation: 'ink-spin .8s linear infinite' }} />
+                <span>Resetting password...</span>
+              </>
+            ) : (
+              <>
+                <Lock size={16} />
+                <span>Reset Password</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        <div style={{ marginTop: 22, textAlign: 'center' }}>
+          <Link to="/admin/login" className="ink-mono" style={{ fontSize: 12, color: 'var(--ink-ink-soft)', textDecoration: 'none' }}>
+            Back to Login
+          </Link>
+        </div>
+      </div>
+
+      <p style={{ textAlign: 'center', fontSize: 13, marginTop: 20 }}>
+        <Link to="/" className="ink-mono" style={{ color: 'rgba(238,234,223,.6)', textDecoration: 'none' }}>
+          &larr; Back to Home
+        </Link>
+      </p>
+    </Wrapper>
   );
 };
 

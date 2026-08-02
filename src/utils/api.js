@@ -1,5 +1,3 @@
-
-
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -157,6 +155,26 @@ export const newsletterAPI = {
   subscribe: (email) => api.post('/newsletter/subscribe', { email }),
   confirmSubscription: (token) => api.get(`/newsletter/confirm/${token}`),
   unsubscribe: (token) => api.get(`/newsletter/unsubscribe/${token}`),
+};
+
+// Image upload (Cloudinary via backend) — used by ImageUploader and RichTextEditor.
+// IMPORTANT: no Content-Type header is set here on purpose. The `api` instance
+// defaults to 'application/json', but when the body is a FormData instance,
+// axios detects that automatically and lets the browser set the correct
+// 'multipart/form-data; boundary=...' header itself. Setting Content-Type
+// manually here would strip the boundary and break the upload server-side.
+export const uploadAPI = {
+  uploadImage: (file, onProgress) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/upload', formData, {
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      },
+    });
+  },
 };
 
 export default api;

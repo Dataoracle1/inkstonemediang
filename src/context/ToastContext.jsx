@@ -36,8 +36,9 @@ export const ToastProvider = ({ children }) => {
 };
 
 const ToastContainer = ({ toasts, removeToast }) => {
+  if (!toasts.length) return null;
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-3 max-w-md">
+    <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 300, display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 380, width: 'calc(100% - 32px)' }}>
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -45,44 +46,36 @@ const ToastContainer = ({ toasts, removeToast }) => {
   );
 };
 
+const TONES = {
+  success: { icon: CheckCircle, color: 'var(--ink-wire-bright)' },
+  error: { icon: XCircle, color: 'var(--ink-stamp)' },
+  warning: { icon: AlertCircle, color: '#b45309' },
+  info: { icon: Info, color: 'var(--ink-ink-soft)' },
+};
+
 const Toast = ({ toast, onClose }) => {
-  const icons = {
-    success: <CheckCircle className="w-5 h-5 text-green-500" />,
-    error: <XCircle className="w-5 h-5 text-red-500" />,
-    warning: <AlertCircle className="w-5 h-5 text-yellow-500" />,
-    info: <Info className="w-5 h-5 text-blue-500" />,
-  };
-
-  const bgColors = {
-    success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-    error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
-    info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-  };
-
-  const textColors = {
-    success: 'text-green-800 dark:text-green-200',
-    error: 'text-red-800 dark:text-red-200',
-    warning: 'text-yellow-800 dark:text-yellow-200',
-    info: 'text-blue-800 dark:text-blue-200',
-  };
+  const tone = TONES[toast.type] || TONES.success;
+  const Icon = tone.icon;
 
   return (
     <div
-      className={`flex items-center gap-3 p-4 rounded-lg border shadow-lg backdrop-blur-sm
-        transform transition-all duration-300 ease-in-out animate-slide-in
-        ${bgColors[toast.type]}`}
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
+        background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderLeft: `3px solid ${tone.color}`,
+        boxShadow: '0 8px 28px rgba(0,0,0,.14)', fontFamily: "'Source Sans 3', sans-serif",
+        animation: 'ink-toast-in .25s ease',
+      }}
     >
-      <div className="flex-shrink-0">{icons[toast.type]}</div>
-      <p className={`flex-1 text-sm font-medium ${textColors[toast.type]}`}>
+      <style>{`@keyframes ink-toast-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }`}</style>
+      <Icon size={18} color={tone.color} style={{ flexShrink: 0, marginTop: 1 }} />
+      <p style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--ink-ink)', margin: 0, lineHeight: 1.5 }}>
         {toast.message}
       </p>
       <button
         onClick={onClose}
-        className={`flex-shrink-0 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 
-          transition-colors ${textColors[toast.type]}`}
+        style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-ink-soft)', padding: 2, display: 'flex' }}
       >
-        <X className="w-4 h-4" />
+        <X size={15} />
       </button>
     </div>
   );

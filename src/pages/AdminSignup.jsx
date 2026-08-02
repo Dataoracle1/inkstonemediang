@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Eye, EyeOff, Key } from 'lucide-react';
@@ -19,27 +18,10 @@ const AdminSignup = () => {
   const [requiresInviteCode, setRequiresInviteCode] = useState(null);
   const [checkingFirstAdmin, setCheckingFirstAdmin] = useState(true);
 
-  // ── Sync dark mode with Navbar toggle ──
-  const [isDark, setIsDark] = useState(
-    () => document.documentElement.classList.contains('dark')
-  );
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-    return () => observer.disconnect();
-  }, []);
-
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    checkFirstAdmin();
-  }, []);
+  useEffect(() => { checkFirstAdmin(); }, []);
 
   const checkFirstAdmin = async () => {
     try {
@@ -77,189 +59,147 @@ const AdminSignup = () => {
     }
   };
 
-  // ── Color tokens ──
-  const pageBg    = isDark ? 'linear-gradient(135deg,#0f1a12 0%,#14532d 100%)' : 'linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%)';
-  const cardBg    = isDark ? '#1e293b' : 'white';
-  const cardBorder = isDark ? '#334155' : 'transparent';
-  const headingColor = isDark ? '#f1f5f9' : '#111827';
-  const subText   = isDark ? '#94a3b8' : '#4b5563';
-  const labelColor = isDark ? '#cbd5e1' : '#374151';
-  const inputBg   = isDark ? '#0f172a' : 'white';
-  const inputBorderColor = isDark ? '#475569' : '#d1d5db';
-  const iconColor = isDark ? '#64748b' : '#9ca3af';
+  const inputStyle = {
+    width: '100%', padding: '12px 12px 12px 42px', border: '1px solid var(--ink-rule)',
+    borderRadius: 2, fontSize: 14, outline: 'none', transition: '.2s', boxSizing: 'border-box',
+    background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)', fontFamily: "'Source Sans 3', sans-serif",
+  };
 
   if (checkingFirstAdmin) {
     return (
-      <div style={{ minHeight: '100vh', background: pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .3s' }}>
-        <div style={{ width: 48, height: 48, border: '3px solid rgba(74,222,128,.3)', borderTopColor: '#16a34a', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
-        <style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style>
+      <div style={{ minHeight: '100vh', background: 'var(--ink-wire)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 44, height: 44, border: '3px solid rgba(238,234,223,.25)', borderTopColor: 'var(--ink-stamp)', borderRadius: '50%', animation: 'ink-spin .8s linear infinite' }} />
+        <style>{`@keyframes ink-spin{to{transform:rotate(360deg);}}`}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: "'DM Sans',sans-serif", minHeight: '100vh', background: pageBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, transition: 'background .3s' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
+    <div style={{ minHeight: '100vh', background: 'var(--ink-wire)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <style>{`@keyframes ink-spin { to { transform: rotate(360deg); } }
+        .ink-auth-input:focus { border-color: var(--ink-stamp) !important; }`}</style>
 
       <div style={{ maxWidth: 440, width: '100%' }}>
 
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(22,163,74,.3)' }}>
-              <span style={{ color: 'white', fontSize: 24, fontWeight: 800 }}>I</span>
-            </div>
-            <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, fontWeight: 800, margin: 0, color: headingColor, transition: 'color .3s' }}>
-              INKSTONE <span style={{ color: '#16a34a' }}>MEDIA</span>
-            </h1>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <h1 className="ink-serif" style={{ fontSize: 32, fontWeight: 600, margin: 0, lineHeight: .9, color: '#eeeadf' }}>
+            SYD<em style={{ fontStyle: 'italic', color: 'var(--ink-stamp)' }}>LINES</em>
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '8px 0 20px' }}>
+            <span style={{ width: 20, height: 1, background: 'rgba(238,234,223,.25)' }} />
+            <span className="ink-mono" style={{ fontSize: 10, letterSpacing: '.3em', color: 'rgba(238,234,223,.55)', fontWeight: 600 }}>MEDIA</span>
+            <span style={{ width: 20, height: 1, background: 'rgba(238,234,223,.25)' }} />
           </div>
-          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 800, marginBottom: 8, color: headingColor, transition: 'color .3s' }}>
+          <h2 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, marginBottom: 8, color: '#eeeadf' }}>
             {requiresInviteCode ? 'Join Admin Team' : 'Create Super Admin Account'}
           </h2>
-          <p style={{ fontSize: 15, color: subText, transition: 'color .3s' }}>
-            {requiresInviteCode
-              ? 'Enter your invite code to create an account'
-              : 'You will be the first admin with full control'}
+          <p style={{ fontSize: 14, color: 'rgba(238,234,223,.65)' }}>
+            {requiresInviteCode ? 'Enter your invite code to create an account' : 'You will be the first admin with full control'}
           </p>
         </div>
 
-        {/* Signup Card */}
-        <div style={{ background: cardBg, borderRadius: 24, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,.12)', border: `1px solid ${cardBorder}`, transition: 'background .3s, border-color .3s' }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, padding: 32 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Error */}
             {error && (
-              <div style={{ padding: 16, background: isDark ? '#450a0a' : '#fee2e2', border: `1px solid ${isDark ? '#b91c1c' : '#fca5a5'}`, borderRadius: 12, color: isDark ? '#fca5a5' : '#dc2626', fontSize: 14, fontWeight: 600 }}>
+              <div style={{ padding: 14, background: 'var(--ink-stamp-dim)', border: '1px solid var(--ink-stamp)', borderRadius: 2, color: 'var(--ink-stamp)', fontSize: 13, fontWeight: 600 }}>
                 {error}
               </div>
             )}
 
-            {/* Invite Code */}
             {requiresInviteCode && (
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
-                  Invite Code <span style={{ color: '#ef4444' }}>*</span>
+                <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
+                  Invite Code <span style={{ color: 'var(--ink-stamp)' }}>*</span>
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <Key size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                  <Key size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
                   <input type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} required
-                    placeholder="INK-XXXX-XXXX"
-                    style={{ width: '100%', padding: '12px 12px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', textTransform: 'uppercase', background: inputBg, color: isDark ? '#f1f5f9' : '#111827' }}
-                    onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
-                    onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
+                    placeholder="INK-XXXX-XXXX" className="ink-auth-input" style={{ ...inputStyle, textTransform: 'uppercase' }} />
                 </div>
-                <p style={{ fontSize: 12, marginTop: 4, color: subText }}>Get this from your administrator</p>
+                <p style={{ fontSize: 11, marginTop: 4, color: 'var(--ink-ink-soft)' }}>Get this from your administrator</p>
               </div>
             )}
 
-            {/* Name */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
+              <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
                 Full Name
               </label>
               <div style={{ position: 'relative' }}>
-                <User size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                <User size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
                 <input type="text" value={name} onChange={e => setName(e.target.value)} required
-                  placeholder="John Doe"
-                  style={{ width: '100%', padding: '12px 12px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', background: inputBg, color: isDark ? '#f1f5f9' : '#111827' }}
-                  onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
+                  placeholder="John Doe" className="ink-auth-input" style={inputStyle} />
               </div>
             </div>
 
-            {/* Email */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
+              <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
                 Email Address
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                <Mail size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                  placeholder="admin@inkstone.com"
-                  style={{ width: '100%', padding: '12px 12px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', background: inputBg, color: isDark ? '#f1f5f9' : '#111827' }}
-                  onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
+                  placeholder="admin@sydlines.com" className="ink-auth-input" style={inputStyle} />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
+              <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
                 Password
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                <Lock size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
                 <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  style={{ width: '100%', padding: '12px 44px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', background: inputBg, color: isDark ? '#f1f5f9' : '#111827' }}
-                  onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
+                  placeholder="••••••••" className="ink-auth-input" style={{ ...inputStyle, paddingRight: 42 }} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: iconColor, transition: '.2s' }}>
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--ink-ink-soft)' }}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <p style={{ fontSize: 12, marginTop: 4, color: subText }}>Minimum 6 characters</p>
+              <p style={{ fontSize: 11, marginTop: 4, color: 'var(--ink-ink-soft)' }}>Minimum 6 characters</p>
             </div>
 
-            {/* Confirm Password */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3, color: labelColor }}>
+              <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-ink-soft)' }}>
                 Confirm Password
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: iconColor }} />
+                <Lock size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
                 <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  style={{ width: '100%', padding: '12px 44px 12px 44px', border: `1.5px solid ${inputBorderColor}`, borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'DM Sans,sans-serif', transition: '.2s', boxSizing: 'border-box', background: inputBg, color: isDark ? '#f1f5f9' : '#111827' }}
-                  onFocus={e => (e.currentTarget.style.borderColor = '#16a34a', e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22,163,74,.1)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = inputBorderColor, e.currentTarget.style.boxShadow = '')} />
+                  placeholder="••••••••" className="ink-auth-input" style={{ ...inputStyle, paddingRight: 42 }} />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: iconColor, transition: '.2s' }}>
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--ink-ink-soft)' }}>
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
-            <button type="submit" disabled={loading}
-              style={{ width: '100%', padding: '14px', background: loading ? '#9ca3af' : 'linear-gradient(to right,#16a34a,#15803d)', color: 'white', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: loading ? 'none' : '0 4px 16px rgba(22,163,74,.35)', transition: '.2s', fontFamily: 'DM Sans,sans-serif', marginTop: 8 }}
-              onMouseEnter={e => !loading && (e.currentTarget.style.transform = 'translateY(-1px)', e.currentTarget.style.boxShadow = '0 6px 20px rgba(22,163,74,.4)')}
-              onMouseLeave={e => !loading && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 16px rgba(22,163,74,.35)')}>
+            <button type="submit" disabled={loading} className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: 13, marginTop: 6, opacity: loading ? .7 : 1 }}>
               {loading ? (
                 <>
-                  <div style={{ width: 20, height: 20, border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
+                  <div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,.5)', borderTopColor: 'white', borderRadius: '50%', animation: 'ink-spin .8s linear infinite' }} />
                   <span>Creating account...</span>
                 </>
               ) : (
                 <>
-                  <UserPlus size={20} />
+                  <UserPlus size={17} />
                   <span>Create Account</span>
                 </>
               )}
             </button>
           </form>
 
-          {/* Login Link */}
-          <p style={{ textAlign: 'center', fontSize: 14, marginTop: 24, color: subText }}>
+          <p style={{ textAlign: 'center', fontSize: 13, marginTop: 22, color: 'var(--ink-ink-soft)' }}>
             Already have an account?{' '}
-            <Link to="/admin/login"
-              style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', transition: '.2s' }}>
+            <Link to="/admin/login" style={{ color: 'var(--ink-stamp)', fontWeight: 700, textDecoration: 'none' }}>
               Login here
             </Link>
           </p>
         </div>
 
-        {/* Back to Home */}
-        <p style={{ textAlign: 'center', fontSize: 14, marginTop: 24, color: subText }}>
-          <Link to="/"
-            style={{ color: subText, textDecoration: 'none', transition: '.2s' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#16a34a'}
-            onMouseLeave={e => e.currentTarget.style.color = subText}>
-            ← Back to Home
+        <p style={{ textAlign: 'center', fontSize: 13, marginTop: 20 }}>
+          <Link to="/" className="ink-mono" style={{ color: 'rgba(238,234,223,.6)', textDecoration: 'none' }}>
+            &larr; Back to Home
           </Link>
         </p>
       </div>

@@ -4,6 +4,16 @@ import { commentsAPI } from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { formatDistanceToNow } from 'date-fns';
 
+const Badge = ({ children, tone = 'neutral' }) => {
+  const tones = { neutral: 'var(--ink-ink-soft)', danger: 'var(--ink-stamp)', warn: '#b45309' };
+  const color = tones[tone] || tones.neutral;
+  return (
+    <span className="ink-mono" style={{ padding: '2px 8px', border: `1px solid ${color}`, color, fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
+      {children}
+    </span>
+  );
+};
+
 const AdminCommentsManagement = () => {
   const [comments, setComments] = useState([]);
   const [stats, setStats] = useState(null);
@@ -12,43 +22,30 @@ const AdminCommentsManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchComments();
-    fetchStats();
-  }, [filter]);
+  useEffect(() => { fetchComments(); fetchStats(); }, [filter]);
 
   const fetchComments = async () => {
     try {
       setLoading(true);
-
       const response = await commentsAPI.getStats();
-      const recentComments = response.data.data.recentComments || [];
-      setComments(recentComments);
+      setComments(response.data.data.recentComments || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
       showToast('Failed to fetch comments', 'error');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const fetchStats = async () => {
-    try {
-      const response = await commentsAPI.getStats();
-      setStats(response.data.data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
+    try { const response = await commentsAPI.getStats(); setStats(response.data.data); }
+    catch (error) { console.error('Error fetching stats:', error); }
   };
 
   const handleDelete = async (commentId, commentAuthor) => {
     if (!confirm(`Are you sure you want to delete this comment by ${commentAuthor}?`)) return;
-
     try {
       await commentsAPI.delete(commentId);
       showToast('Comment deleted successfully', 'success');
-      fetchComments();
-      fetchStats();
+      fetchComments(); fetchStats();
     } catch (error) {
       console.error('Error deleting comment:', error);
       showToast('Failed to delete comment', 'error');
@@ -59,8 +56,7 @@ const AdminCommentsManagement = () => {
     try {
       await commentsAPI.approve(commentId, !currentStatus);
       showToast(`Comment ${!currentStatus ? 'approved' : 'unapproved'}`, 'success');
-      fetchComments();
-      fetchStats();
+      fetchComments(); fetchStats();
     } catch (error) {
       console.error('Error updating comment:', error);
       showToast('Failed to update comment', 'error');
@@ -69,192 +65,113 @@ const AdminCommentsManagement = () => {
 
   const filteredComments = comments.filter(comment => {
     if (searchQuery) {
-      return (
-        comment.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comment.author.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      return comment.content.toLowerCase().includes(searchQuery.toLowerCase()) || comment.author.toLowerCase().includes(searchQuery.toLowerCase());
     }
-    if (filter === 'flagged') {
-      return comment.isFlagged;
-    }
+    if (filter === 'flagged') return comment.isFlagged;
     return true;
   });
 
   return (
     <div>
-     
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 24 }}>
+          {[
+            { label: 'Total Comments', value: stats.totalComments, icon: MessageSquare },
+            { label: 'Approved', value: stats.approvedComments, icon: CheckCircle },
+            { label: 'Pending', value: stats.pendingComments, icon: Eye },
+            { label: 'Flagged', value: stats.flaggedComments, icon: Flag },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="ink-card" style={{ padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Comments</p>
-                <p className="text-3xl font-bold">{stats.totalComments}</p>
+                <p className="ink-mono" style={{ fontSize: 10, color: 'var(--ink-ink-soft)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</p>
+                <p className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--ink-ink)', margin: 0 }}>{value}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                <MessageSquare className="text-blue-500" size={24} />
-              </div>
+              <Icon size={20} color="var(--ink-stamp)" />
             </div>
-          </div>
-
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-                <p className="text-3xl font-bold">{stats.approvedComments}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <CheckCircle className="text-green-500" size={24} />
-              </div>
-            </div>
-          </div>
-
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-                <p className="text-3xl font-bold">{stats.pendingComments}</p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
-                <Eye className="text-yellow-500" size={24} />
-              </div>
-            </div>
-          </div>
-
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Flagged</p>
-                <p className="text-3xl font-bold">{stats.flaggedComments}</p>
-              </div>
-              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                <Flag className="text-red-500" size={24} />
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
-      
-      <div className="card p-6 mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'all'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              All Comments
-            </button>
-            <button
-              onClick={() => setFilter('flagged')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === 'flagged'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Flagged Only
-            </button>
+      <div className="ink-card" style={{ padding: 18, marginBottom: 20 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {['all', 'flagged'].map(f => (
+              <button key={f} onClick={() => setFilter(f)} className="ink-mono"
+                style={{
+                  padding: '9px 16px', border: '1px solid var(--ink-rule)', cursor: 'pointer', fontSize: 11,
+                  fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em',
+                  background: filter === f ? 'var(--ink-ink)' : 'transparent',
+                  color: filter === f ? 'var(--ink-paper)' : 'var(--ink-ink-soft)',
+                }}>
+                {f === 'all' ? 'All Comments' : 'Flagged Only'}
+              </button>
+            ))}
           </div>
-
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search comments..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input pl-10 w-full"
-            />
+          <div style={{ position: 'relative', width: 240 }}>
+            <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
+            <input type="text" placeholder="Search comments..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '9px 12px 9px 34px', border: '1px solid var(--ink-rule)', borderRadius: 2, fontSize: 13, outline: 'none', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)', boxSizing: 'border-box' }} />
           </div>
         </div>
       </div>
 
-      <div className="card p-6">
-        <h3 className="text-xl font-heading font-bold mb-4">
+      <div className="ink-card" style={{ padding: 22 }}>
+        <h3 className="ink-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 18, color: 'var(--ink-ink)' }}>
           Recent Comments ({filteredComments.length})
         </h3>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+          <div style={{ textAlign: 'center', padding: '50px 0' }}>
+            <div style={{ width: 40, height: 40, border: '3px solid var(--ink-rule)', borderTopColor: 'var(--ink-stamp)', borderRadius: '50%', animation: 'ink-spin .8s linear infinite', margin: '0 auto' }} />
+            <style>{`@keyframes ink-spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : filteredComments.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No comments found</p>
+          <div style={{ textAlign: 'center', padding: '50px 24px' }}>
+            <p style={{ color: 'var(--ink-ink-soft)', fontSize: 14 }}>No comments found</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredComments.map((comment) => (
-              <div
-                key={comment._id}
-                className={`p-4 rounded-lg border transition ${
-                  comment.isFlagged
-                    ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10'
-                    : 'border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-800'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {filteredComments.map(comment => (
+              <div key={comment._id}
+                style={{ padding: 16, border: `1px solid ${comment.isFlagged ? 'var(--ink-stamp)' : 'var(--ink-rule)'}`, background: comment.isFlagged ? 'var(--ink-stamp-dim)' : 'var(--ink-paper-dim)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid var(--ink-stamp)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-stamp)', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
                       {comment.author[0].toUpperCase()}
                     </div>
                     <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {comment.author}
-                        </span>
-                        {comment.isFlagged && (
-                          <span className="badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs">
-                            Flagged
-                          </span>
-                        )}
-                        {!comment.isApproved && (
-                          <span className="badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">
-                            Pending
-                          </span>
-                        )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-ink)' }}>{comment.author}</span>
+                        {comment.isFlagged && <Badge tone="danger">Flagged</Badge>}
+                        {!comment.isApproved && <Badge tone="warn">Pending</Badge>}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="ink-mono" style={{ fontSize: 10, color: 'var(--ink-ink-soft)', margin: '2px 0 0' }}>
                         {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                        {comment.post?.title && ` • on "${comment.post.title}"`}
+                        {comment.post?.title && ` on "${comment.post.title}"`}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleApprove(comment._id, comment.isApproved)}
-                      className={`p-2 rounded transition ${
-                        comment.isApproved
-                          ? 'hover:bg-yellow-100 dark:hover:bg-yellow-900/30 text-yellow-600'
-                          : 'hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600'
-                      }`}
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => handleApprove(comment._id, comment.isApproved)}
                       title={comment.isApproved ? 'Unapprove' : 'Approve'}
-                    >
-                      {comment.isApproved ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                      style={{ width: 28, height: 28, border: '1px solid var(--ink-rule)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: comment.isApproved ? '#b45309' : 'var(--ink-wire-bright)' }}>
+                      {comment.isApproved ? <XCircle size={14} /> : <CheckCircle size={14} />}
                     </button>
-                    <button
-                      onClick={() => handleDelete(comment._id, comment.author)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition text-red-600"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} />
+                    <button onClick={() => handleDelete(comment._id, comment.author)} title="Delete"
+                      style={{ width: 28, height: 28, border: '1px solid var(--ink-rule)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink-stamp)' }}>
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
 
-                <p className="text-gray-700 dark:text-gray-300 ml-13">
+                <p style={{ fontSize: 14, color: 'var(--ink-ink-soft)', margin: '0 0 10px', marginLeft: 48, lineHeight: 1.6 }}>
                   {comment.content}
                 </p>
 
-                <div className="flex items-center space-x-4 mt-3 ml-13 text-sm text-gray-500 dark:text-gray-400">
-                  <span>👍 {comment.likes || 0} likes</span>
-                  <span>👎 {comment.dislikes || 0} dislikes</span>
+                <div className="ink-mono" style={{ display: 'flex', gap: 16, marginLeft: 48, fontSize: 11, color: 'var(--ink-ink-soft)' }}>
+                  <span>{comment.likes || 0} likes</span>
+                  <span>{comment.dislikes || 0} dislikes</span>
                 </div>
               </div>
             ))}
