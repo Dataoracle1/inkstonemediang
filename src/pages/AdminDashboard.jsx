@@ -362,7 +362,8 @@ const AdminDashboard = () => {
       <style>{`
         .dash-input:focus { border-color: var(--ink-stamp) !important; }
         .dash-tr:hover td { background: var(--ink-paper-dim); }
-        .tabs-row { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tabs-row { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .tabs-row::-webkit-scrollbar { display: none; }
         @keyframes ink-spin { to { transform: rotate(360deg); } }
         @media (max-width: 600px) {
           .hide-sm { display: none !important; }
@@ -373,7 +374,7 @@ const AdminDashboard = () => {
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
 
       {/* ── Header ── */}
-      <header style={{ background: 'var(--ink-wire)', position: 'sticky', top: 0, zIndex: 100, borderBottom: '3px solid var(--ink-ink)' }}>
+      <header style={{ background: 'var(--ink-wire)', borderBottom: '3px solid var(--ink-ink)' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div style={{ minWidth: 0 }}>
             <div className="ink-serif" style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.02em', color: 'var(--ink-stamp)', marginBottom: 3 }}>

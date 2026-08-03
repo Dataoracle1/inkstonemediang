@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
 import { postsAPI } from '../utils/api';
 import NewsCard from '../components/NewsCard';
@@ -32,23 +32,61 @@ const WireTicker = ({ headlines }) => {
   );
 };
 
-/* ── Ledger stat strip ── */
-const Ledger = ({ storiesToday, deskCount, readers }) => (
-  <div className="ink-ledger">
-    <div className="ink-cell">
-      <span className="ink-num">{storiesToday}</span>
-      <span className="ink-label">Stories Today</span>
+/* ── Animated count-up (real numbers, no more hardcoded stats) ── */
+const useCountUp = (target, duration = 900) => {
+  const [value, setValue] = useState(0);
+  const fromRef = useRef(0);
+
+  useEffect(() => {
+    const from = fromRef.current;
+    const to = Number(target) || 0;
+    if (from === to) return;
+    let frame;
+    let start = null;
+    const step = (timestamp) => {
+      if (start === null) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setValue(Math.round(from + (to - from) * eased));
+      if (progress < 1) frame = requestAnimationFrame(step);
+      else fromRef.current = to;
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return value;
+};
+
+const formatCompact = (n) => {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(n);
+};
+
+/* ── Ledger stat strip — real numbers, animated ── */
+const Ledger = ({ storiesToday, deskCount, totalViews }) => {
+  const animatedStories = useCountUp(storiesToday);
+  const animatedDesks = useCountUp(deskCount);
+  const animatedViews = useCountUp(totalViews);
+
+  return (
+    <div className="ink-ledger">
+      <div className="ink-cell">
+        <span className="ink-num">{animatedStories}</span>
+        <span className="ink-label">Stories Today</span>
+      </div>
+      <div className="ink-cell">
+        <span className="ink-num">{animatedDesks}</span>
+        <span className="ink-label">Desks</span>
+      </div>
+      <div className="ink-cell">
+        <span className="ink-num">{formatCompact(animatedViews)}</span>
+        <span className="ink-label">Total Views</span>
+      </div>
     </div>
-    <div className="ink-cell">
-      <span className="ink-num">{deskCount}</span>
-      <span className="ink-label">Desks</span>
-    </div>
-    <div className="ink-cell">
-      <span className="ink-num">{readers}</span>
-      <span className="ink-label">Readers Now</span>
-    </div>
-  </div>
-);
+  );
+};
 
 const Home = () => {
   const [searchParams] = useSearchParams();
@@ -67,8 +105,9 @@ const Home = () => {
   const [featuredPost, setFeaturedPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('latest');
+  const [ledgerStats, setLedgerStats] = useState({ storiesToday: 0, totalViews: 0 });
 
-  useEffect(() => { fetchTrendingPosts(); fetchBreakingNews(); }, []);
+  useEffect(() => { fetchTrendingPosts(); fetchBreakingNews(); fetchLedgerStats(); }, []);
   useEffect(() => { fetchPosts(); }, [filter, category, searchQuery]);
 
   const fetchBreakingNews = useCallback(async () => {
@@ -78,6 +117,22 @@ const Home = () => {
       setBreakingPosts(data);
     } catch (error) {
       console.error('Error fetching breaking news:', error);
+    }
+  }, []);
+
+  // Site-wide (unfiltered) sample used only to compute the ledger numbers,
+  // independent of whatever category/search filter is currently applied
+  // to the main feed below.
+  const fetchLedgerStats = useCallback(async () => {
+    try {
+      const response = await postsAPI.getAll({ limit: 100 });
+      const allPosts = response.data.data?.posts || response.data.posts || response.data || [];
+      const todayStr = new Date().toDateString();
+      const storiesToday = allPosts.filter(p => new Date(p.createdAt).toDateString() === todayStr).length;
+      const totalViews = allPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+      setLedgerStats({ storiesToday, totalViews });
+    } catch (error) {
+      console.error('Error fetching ledger stats:', error);
     }
   }, []);
 
@@ -139,7 +194,7 @@ const Home = () => {
       `}</style>
 
       <WireTicker headlines={headlines} />
-      <Ledger storiesToday={posts.length || 27} deskCount={CATEGORIES?.length || 6} readers="12.4K" />
+      <Ledger storiesToday={ledgerStats.storiesToday} deskCount={CATEGORIES.length} totalViews={ledgerStats.totalViews} />
 
       {/* ── Category pills ── */}
       <div className="ink-cats-row" style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '14px 18px', borderBottom: '1px solid var(--ink-rule)' }}>
