@@ -308,9 +308,6 @@ const Home = () => {
             <div className="ink-card" style={{ padding: '20px 18px', marginBottom: 20, position: 'sticky', top: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <h3 className="ink-serif" style={{ fontSize: 15, fontWeight: 600, margin: 0, color: 'var(--ink-ink)' }}>Trending Now</h3>
-                <span className="ink-stamp-badge ink-live" style={{ marginLeft: 'auto' }}>
-                  <span className="ink-dot" />Live
-                </span>
               </div>
               {trendingPosts.length > 0 ? (
                 <div>
