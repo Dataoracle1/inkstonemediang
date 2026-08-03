@@ -69,9 +69,12 @@ const Footer = () => {
             {/* Brand */}
             <div>
               <div style={{ marginBottom: 14 }}>
-                <h3 className="ink-serif" style={{ fontSize: 26, fontWeight: 600, color: '#eeeadf', lineHeight: .9, margin: 0 }}>
-                  SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em>
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <img src="/sydlines-icon.png" alt="Sydlines" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
+                  <h3 className="ink-serif" style={{ fontSize: 26, fontWeight: 600, color: '#eeeadf', lineHeight: .9, margin: 0 }}>
+                    SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em>
+                  </h3>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
                   <span style={{ width: 18, height: 1, background: 'rgba(238,234,223,.25)' }} />
                   <span className="ink-mono" style={{ fontSize: 9, letterSpacing: '.28em', color: 'rgba(238,234,223,.55)', fontWeight: 600 }}>MEDIA</span>
