@@ -171,19 +171,12 @@ const Navbar = () => {
         {/* ── Masthead ── */}
         <div style={{ padding: '26px 18px 16px', textAlign: 'center', maxWidth: 1280, margin: '0 auto' }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-              <img
-                src="/sydlines-icon.png"
-                alt="Sydlines"
-                style={{ width: 'clamp(34px, 6vw, 48px)', height: 'clamp(34px, 6vw, 48px)', objectFit: 'contain', flexShrink: 0 }}
-              />
-              <h1
-                className="ink-serif"
-                style={{ fontWeight: 600, fontSize: 'clamp(34px, 7vw, 50px)', lineHeight: .9, margin: 0, letterSpacing: '-.02em', color: 'var(--ink-ink)' }}
-              >
-                SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em>
-              </h1>
-            </div>
+            <h1
+              className="ink-serif"
+              style={{ fontWeight: 600, fontSize: 'clamp(34px, 7vw, 50px)', lineHeight: .9, margin: 0, letterSpacing: '-.035em', color: 'var(--ink-ink)' }}
+            >
+              SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em><span style={{ fontStyle: 'normal', color: 'var(--ink-stamp)' }}>.</span>
+            </h1>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8 }}>
               <span style={{ width: 26, height: 1, background: 'var(--ink-rule)' }} />
               <span className="ink-mono" style={{ fontSize: 10, letterSpacing: '.3em', color: 'var(--ink-ink-soft)', fontWeight: 600 }}>MEDIA</span>
