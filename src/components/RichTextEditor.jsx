@@ -188,7 +188,7 @@ const btnPrimary = {
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
-const RichTextEditor = ({ value, onChange, placeholder = 'Write your content here...', onTagsGenerated }) => {
+const RichTextEditor = React.forwardRef(({ value, onChange, placeholder = 'Write your content here...', onTagsGenerated }, ref) => {
   const quillRef = useRef(null);
   const fileInputRef = useRef(null);
   const savedRange = useRef(null);
@@ -211,17 +211,22 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Write your content her
 
   const openImageModal = useCallback(() => {
     const quill = quillRef.current?.getEditor();
-    if (quill) savedRange.current = quill.getSelection();
+    if (quill) savedRange.current = quill.getSelection(true);
     setImgTab('upload'); setImgError(''); setImageUrl('');
     setShowImageModal(true);
   }, []);
 
   const openVideoModal = useCallback(() => {
     const quill = quillRef.current?.getEditor();
-    if (quill) savedRange.current = quill.getSelection();
+    if (quill) savedRange.current = quill.getSelection(true);
     setVideoError(''); setVideoUrl('');
     setShowVideoModal(true);
   }, []);
+
+  React.useImperativeHandle(ref, () => ({
+    openImageModal,
+    openVideoModal,
+  }), [openImageModal, openVideoModal]);
 
   const insertImage = useCallback((src) => {
     const quill = quillRef.current?.getEditor();
@@ -608,6 +613,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Write your content her
       `}</style>
     </>
   );
-};
+});
+
+RichTextEditor.displayName = 'RichTextEditor';
 
 export default RichTextEditor;

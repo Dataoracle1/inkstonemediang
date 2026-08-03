@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
-import { Plus, Edit2, Trash2, Eye, Heart, LogOut, BarChart3, FileText, Users, Save, X, UserPlus, Key, Copy, Check, Shield, Mail, MessageSquare, Send } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Heart, LogOut, BarChart3, FileText, Users, Save, X, UserPlus, Key, Copy, Check, Shield, Mail, MessageSquare, Send, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { postsAPI, adminAPI } from '../utils/api';
 import ContactsManagement from '../components/Contactsmanagement';
@@ -97,6 +97,8 @@ const confirmToast = (title, sub, onConfirm, confirmLabel = 'Delete', danger = t
 
 // ── Post editor form ─────────────────────────────────────────────────────
 const PostForm = ({ formData, setFormData, editingPost, onSubmit, onCancel }) => {
+  const editorRef = useRef(null);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -117,73 +119,105 @@ const PostForm = ({ formData, setFormData, editingPost, onSubmit, onCancel }) =>
       </div>
 
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Title *</label>
-            <input type="text" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Post title..." style={inputStyle} />
+        <div className="post-form-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, alignItems: 'start' }}>
+          <style>{`@media (max-width: 900px) { .post-form-grid { grid-template-columns: 1fr !important; } }`}</style>
+
+          {/* ── Main column: title + content ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+            <div>
+              <label style={labelStyle}>Title *</label>
+              <input type="text" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Post title..." style={{ ...inputStyle, fontSize: 17, fontWeight: 600 }} />
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Content *</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => editorRef.current?.openImageModal()}
+                    className="ink-btn"
+                    style={{ padding: '6px 12px', fontSize: 11 }}
+                    title="Insert an image at your cursor position, anywhere in the content"
+                  >
+                    <ImageIcon size={13} /> Insert Image
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editorRef.current?.openVideoModal()}
+                    className="ink-btn"
+                    style={{ padding: '6px 12px', fontSize: 11 }}
+                    title="Embed a YouTube, Vimeo, X, Instagram, TikTok, or Facebook post at your cursor position"
+                  >
+                    <VideoIcon size={13} /> Embed Video
+                  </button>
+                </div>
+              </div>
+              <p className="ink-mono" style={{ fontSize: 11, color: 'var(--ink-ink-soft)', margin: '0 0 8px' }}>
+                Click into the content below, place your cursor where you want the image, then click "Insert Image" — it uploads and drops in right there.
+              </p>
+              <RichTextEditor ref={editorRef} value={formData.content} onChange={handleContentChange} placeholder="Write your content..." onTagsGenerated={handleTagsGenerated} />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Excerpt</label>
+              <textarea name="excerpt" value={formData.excerpt} onChange={handleInputChange} rows={2} placeholder="Short summary (auto-generated if empty)" style={{ ...inputStyle, resize: 'vertical' }} />
+            </div>
           </div>
 
-          <div>
-            <label style={labelStyle}>Category *</label>
-            <select name="category" value={formData.category} onChange={handleInputChange} required style={inputStyle}>
-              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label style={labelStyle}>Status</label>
-            <select name="status" value={formData.status} onChange={handleInputChange} style={inputStyle}>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          <div style={{ gridColumn: '1 / -1' }}>
+          {/* ── Sidebar column: metadata ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             <ImageUploader value={formData.image} onChange={handleImageChange} label="Featured Image" required />
-          </div>
 
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Excerpt</label>
-            <textarea name="excerpt" value={formData.excerpt} onChange={handleInputChange} rows={2} placeholder="Short summary (auto-generated if empty)" style={{ ...inputStyle, resize: 'vertical' }} />
-          </div>
+            <div>
+              <label style={labelStyle}>Category *</label>
+              <select name="category" value={formData.category} onChange={handleInputChange} required style={inputStyle}>
+                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            </div>
 
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Content *</label>
-            <RichTextEditor value={formData.content} onChange={handleContentChange} placeholder="Write your content..." onTagsGenerated={handleTagsGenerated} />
-          </div>
+            <div>
+              <label style={labelStyle}>Status</label>
+              <select name="status" value={formData.status} onChange={handleInputChange} style={inputStyle}>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
 
-          <div>
-            <label style={labelStyle}>Video URL (YouTube/Vimeo)</label>
-            <input type="url" name="videoUrl" value={formData.videoUrl} onChange={handleInputChange} placeholder="https://youtube.com/..." style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Video External Link</label>
-            <input type="url" name="videoLink" value={formData.videoLink} onChange={handleInputChange} placeholder="https://..." style={inputStyle} />
-          </div>
+            <div>
+              <label style={labelStyle}>Tags (comma-separated)</label>
+              <input type="text" name="tags" value={formData.tags} onChange={handleInputChange} placeholder="finance, stocks, economy" style={inputStyle} />
+            </div>
 
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Tags (comma-separated)</label>
-            <input type="text" name="tags" value={formData.tags} onChange={handleInputChange} placeholder="finance, stocks, economy" style={inputStyle} />
-          </div>
+            <div>
+              <label style={labelStyle}>Video URL (YouTube/Vimeo)</label>
+              <input type="url" name="videoUrl" value={formData.videoUrl} onChange={handleInputChange} placeholder="https://youtube.com/..." style={inputStyle} />
+            </div>
 
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            {[['isFeatured', 'Featured Post'], ['isTrending', 'Trending Post']].map(([key, lbl]) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--ink-ink-soft)' }}>
-                <input type="checkbox" name={key} checked={formData[key]} onChange={handleInputChange} style={{ width: 16, height: 16, accentColor: 'var(--ink-stamp)', cursor: 'pointer' }} />
-                {lbl}
-              </label>
-            ))}
-          </div>
-        </div>
+            <div>
+              <label style={labelStyle}>Video External Link</label>
+              <input type="url" name="videoLink" value={formData.videoLink} onChange={handleInputChange} placeholder="https://..." style={inputStyle} />
+            </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-          <button type="submit" className="ink-btn ink-btn-stamp" style={{ padding: '11px 24px' }}>
-            <Save size={16} /> {editingPost ? 'Update Post' : 'Publish Post'}
-          </button>
-          <button type="button" onClick={onCancel} className="ink-btn" style={{ padding: '11px 20px' }}>
-            Cancel
-          </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', background: 'var(--ink-paper-dim)', border: '1px solid var(--ink-rule)' }}>
+              {[['isFeatured', 'Featured Post'], ['isTrending', 'Trending Post']].map(([key, lbl]) => (
+                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--ink-ink-soft)' }}>
+                  <input type="checkbox" name={key} checked={formData[key]} onChange={handleInputChange} style={{ width: 16, height: 16, accentColor: 'var(--ink-stamp)', cursor: 'pointer' }} />
+                  {lbl}
+                </label>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button type="submit" className="ink-btn ink-btn-stamp" style={{ padding: '11px 24px', flex: 1, justifyContent: 'center' }}>
+                <Save size={16} /> {editingPost ? 'Update' : 'Publish'}
+              </button>
+              <button type="button" onClick={onCancel} className="ink-btn" style={{ padding: '11px 20px' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       </form>
     </div>

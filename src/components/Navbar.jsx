@@ -133,7 +133,6 @@ const Navbar = () => {
       `}</style>
 
       <nav
-        className="sticky top-0"
         style={{
           zIndex: 50,
           background: 'var(--ink-paper)',
