@@ -319,17 +319,6 @@ const Home = () => {
                 <p style={{ fontSize: 13, color: 'var(--ink-ink-soft)' }}>No trending posts yet.</p>
               )}
             </div>
-
-            <div className="ink-card" style={{ padding: '20px 18px' }}>
-              <h3 className="ink-serif" style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: 'var(--ink-ink)' }}>Browse Desks</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {sidebarCategories.map(cat => (
-                  <Link key={cat} to={categoryPath(cat)} className={`ink-pill ${category === cat ? 'ink-active' : ''}`} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
-                    {cat}
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
