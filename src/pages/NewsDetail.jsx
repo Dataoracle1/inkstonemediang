@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { Calendar, Eye, Heart, Share2, ArrowLeft, ExternalLink } from 'lucide-react';
 import { postsAPI } from '../utils/api';
 import CommentSection from '../components/CommentSection';
 import TrendingPost from '../components/TrendingPost';
 import AdSenseAd from '../components/AdSenseAd';
 import { formatDistanceToNow } from 'date-fns';
+import { trackPageView } from '../utils/analytics';
 
 const NewsDetail = () => {
   const { slug } = useParams();
+  const location = useLocation();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasLiked, setHasLiked] = useState(false);
@@ -21,6 +23,7 @@ const NewsDetail = () => {
       setLoading(true);
       const response = await postsAPI.getOne(slug);
       setPost(response.data.data.post);
+      trackPageView(location.pathname, response.data.data.post._id);
       const userIdentifier = localStorage.getItem('userIdentifier');
       if (userIdentifier && response.data.data.post.likedBy?.includes(userIdentifier)) {
         setHasLiked(true);

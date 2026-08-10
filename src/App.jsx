@@ -19,6 +19,7 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import ForgotPassword from './pages/ForgotPassword_fixed';
 import ResetPassword from './pages/ResetPassword_fixed';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -33,6 +34,7 @@ function App() {
         <ToastProvider>
           <Router>
             <ScrollToTop />
+            <AnalyticsTracker />
             <div className="ink-root flex flex-col min-h-screen">
               <Navbar />
               <main className="flex-grow">
