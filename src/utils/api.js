@@ -177,4 +177,37 @@ export const uploadAPI = {
   },
 };
 
+export const categoriesAPI = {
+  getAll: () => api.get('/categories'),
+  create: (data) => api.post('/categories', data),
+  update: (id, data) => api.put(`/categories/${id}`, data),
+  delete: (id) => api.delete(`/categories/${id}`),
+};
+
+export const desksAPI = {
+  getAll: () => api.get('/desks'),
+  create: (data) => api.post('/desks', data),
+  update: (id, data) => api.put(`/desks/${id}`, data),
+  delete: (id) => api.delete(`/desks/${id}`),
+};
+
+export const mediaAPI = {
+  getAll: (params) => api.get('/media', { params }),
+  delete: (id) => api.delete(`/media/${id}`),
+};
+
+export const settingsAPI = {
+  get: () => api.get('/settings'),
+  update: (data) => api.put('/settings', data),
+};
+
+export const activityLogsAPI = {
+  getAll: (params) => api.get('/activity-logs', { params }),
+};
+
+export const analyticsAPI = {
+  getOverview: (days = 7) => api.get('/analytics/overview', { params: { days } }),
+  getTopPosts: (days = 7, limit = 5) => api.get('/analytics/top-posts', { params: { days, limit } }),
+};
+
 export default api;
