@@ -1,76 +1,259 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Eye, Heart } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Calendar, Eye, MessageCircle } from 'lucide-react';
+
+const ImageFallback = ({ category }) => (
+  <div style={{
+    width: '100%',
+    height: '100%',
+    background: 'var(--ink-wire)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#eeeadf',
+    fontSize: 18,
+    fontWeight: 600,
+    minHeight: 120,
+  }}>
+    {(category || 'NEWS')[0]}
+  </div>
+);
 
 const NewsCard = ({ post, featured = false }) => {
-  const { _id, slug, title, excerpt, image, category, createdAt, views = 0, likes = 0 } = post;
-  const postUrl = `/news/${slug || _id}`;
-  const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+  const [imageBroken, setImageBroken] = React.useState(!post.image);
+
+  const truncate = (text, maxLength = 100) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   if (featured) {
-    // ── Hero block, matching the mockup's stamped hero exactly ──
     return (
-      <Link to={postUrl} style={{ textDecoration: 'none', display: 'block' }}>
-        <div
-          className="ink-card"
-          style={{ position: 'relative', paddingBottom: 2 }}
+      <Link
+        to={`/news/${post.slug}`}
+        style={{ textDecoration: 'none' }}
+      >
+        <article className="ink-card" style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 24,
+          padding: 28,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.boxShadow = 'var(--ink-shadow-hover)'}
+        onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
         >
-          {image && (
-            <div style={{ position: 'relative', height: 260, overflow: 'hidden' }}>
-              <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <style>{`
+            @media (max-width: 768px) {
+              .ink-featured-card {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}</style>
+
+          <div className="ink-featured-card">
+            <div style={{ background: 'var(--ink-paper-dim)', border: '1px solid var(--ink-rule)', overflow: 'hidden' }}>
+              {!imageBroken ? (
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  onError={() => setImageBroken(true)}
+                  style={{
+                    width: '100%',
+                    height: 280,
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              ) : (
+                <ImageFallback category={post.category} />
+              )}
             </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, padding: '16px 16px 0' }}>
-            <span className="ink-stamp-badge ink-live">
-              <span className="ink-dot" />Live
-            </span>
-            <span className="ink-stamp-badge">{category}</span>
           </div>
-          <h2 className="ink-serif" style={{ fontWeight: 600, fontSize: 'clamp(22px,4vw,30px)', lineHeight: 1.08, margin: '14px 16px 10px', color: 'var(--ink-ink)' }}>
-            {title}
-          </h2>
-          {excerpt && (
-            <p className="ink-serif" style={{ fontStyle: 'italic', fontWeight: 500, fontSize: 15, color: 'var(--ink-ink-soft)', margin: '0 16px 16px', lineHeight: 1.4 }}>
-              {excerpt}
-            </p>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--ink-rule)' }}>
-            <span className="ink-mono" style={{ fontSize: 11, color: 'var(--ink-ink-soft)', display: 'flex', gap: 12 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={11} />{timeAgo}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Eye size={11} />{views}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Heart size={11} />{likes}</span>
-            </span>
-            <span className="ink-btn">Read Story &rarr;</span>
+
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <span className="ink-stamp-badge" style={{ marginBottom: 12, display: 'inline-block' }}>
+                {post.category}
+              </span>
+              <h2 className="ink-serif" style={{
+                fontSize: 'clamp(20px, 3vw, 32px)',
+                fontWeight: 600,
+                marginBottom: 12,
+                lineHeight: 1.2,
+                color: 'var(--ink-ink)',
+              }}>
+                {post.title}
+              </h2>
+              <p style={{
+                fontSize: 14,
+                color: 'var(--ink-ink-soft)',
+                lineHeight: 1.6,
+                marginBottom: 16,
+              }}>
+                {truncate(post.excerpt || post.content, 150)}
+              </p>
+            </div>
+
+            <div className="ink-mono" style={{
+              display: 'flex',
+              gap: 16,
+              fontSize: 12,
+              color: 'var(--ink-ink-soft)',
+              flexWrap: 'wrap',
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Calendar size={13} />
+                {formatDate(post.createdAt)}
+              </span>
+              <span>•</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Eye size={13} />
+                {post.views || 0} views
+              </span>
+              {post.commentCount > 0 && (
+                <>
+                  <span>•</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MessageCircle size={13} />
+                    {post.commentCount}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        </article>
       </Link>
     );
   }
 
-  // ── Feed story row (numbered, mockup style) ──
   return (
-    <Link to={postUrl} className="ink-story">
-      {image && (
-        <div style={{ width: 88, height: 88, flexShrink: 0, overflow: 'hidden', border: '1px solid var(--ink-rule)' }}>
-          <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        </div>
-      )}
-      <div className="ink-body" style={{ minWidth: 0, flex: 1 }}>
-        <h4 style={{
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+    <Link
+      to={`/news/${post.slug}`}
+      style={{ textDecoration: 'none' }}
+    >
+      <article className="ink-card" style={{
+        display: 'flex',
+        gap: 16,
+        padding: 16,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        borderBottom: '1px solid var(--ink-rule)',
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.boxShadow = 'var(--ink-shadow-hover)'}
+      onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+      >
+        <style>{`
+          @media (max-width: 640px) {
+            .ink-card-image {
+              width: 60px !important;
+              height: 60px !important;
+            }
+            
+            .ink-card-content {
+              flex: 1 !important;
+            }
+            
+            .ink-card-title {
+              font-size: 14px !important;
+            }
+            
+            .ink-card-meta {
+              font-size: 10px !important;
+              gap: 8px !important;
+            }
+          }
+        `}</style>
+
+        <div className="ink-card-image" style={{
+          flexShrink: 0,
+          width: 88,
+          height: 88,
+          background: 'var(--ink-paper-dim)',
+          border: '1px solid var(--ink-rule)',
+          overflow: 'hidden',
         }}>
-          {title}
-        </h4>
-        <div className="ink-meta">
-          <span className="ink-cat">{category}</span>
-          <span>&middot;</span>
-          <span>{timeAgo}</span>
-          <span>&middot;</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Eye size={11} />{views}</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Heart size={11} />{likes}</span>
+          {!imageBroken ? (
+            <img
+              src={post.image}
+              alt={post.title}
+              onError={() => setImageBroken(true)}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          ) : (
+            <ImageFallback category={post.category} />
+          )}
         </div>
-      </div>
+
+        <div className="ink-card-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <p className="ink-stamp-badge ink-mono" style={{
+              margin: 0,
+              marginBottom: 6,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '.1em',
+              textTransform: 'uppercase',
+              color: '#c83232',
+            }}>
+              {post.category}
+            </p>
+            <h3 className="ink-card-title ink-serif" style={{
+              fontSize: 'clamp(14px, 2vw, 18px)',
+              fontWeight: 600,
+              margin: 0,
+              marginBottom: 8,
+              lineHeight: 1.3,
+              color: 'var(--ink-ink)',
+            }}>
+              {post.title}
+            </h3>
+            <p style={{
+              fontSize: 'clamp(12px, 1.5vw, 13px)',
+              color: 'var(--ink-ink-soft)',
+              margin: 0,
+              lineHeight: 1.5,
+            }}>
+              {truncate(post.excerpt || post.content, 80)}
+            </p>
+          </div>
+
+          <div className="ink-card-meta ink-mono" style={{
+            display: 'flex',
+            gap: 12,
+            fontSize: 11,
+            color: 'var(--ink-ink-soft)',
+            marginTop: 8,
+            flexWrap: 'wrap',
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Calendar size={11} />
+              {formatDate(post.createdAt)}
+            </span>
+            <span>•</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Eye size={11} />
+              {post.views || 0}
+            </span>
+          </div>
+        </div>
+      </article>
     </Link>
   );
 };

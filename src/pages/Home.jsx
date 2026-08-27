@@ -88,18 +88,96 @@ const Ledger = ({ storiesToday, deskCount, totalViews }) => {
   const animatedViews = useCountUp(totalViews);
 
   return (
-    <div className="ink-ledger">
-      <div className="ink-cell">
-        <span className="ink-num">{animatedStories}</span>
-        <span className="ink-label">Stories Today</span>
+    <div className="ink-ledger" style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+      gap: 16,
+      padding: '16px 18px',
+      borderBottom: '1px solid var(--ink-rule)',
+      background: 'var(--ink-paper)',
+    }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .ink-ledger {
+            grid-template-columns: 1fr 1fr 1fr !important;
+            gap: 12px !important;
+            padding: 12px !important;
+          }
+        }
+      `}</style>
+
+      <div className="ink-cell" style={{
+        padding: '12px 0',
+        borderRight: '1px solid var(--ink-rule)',
+        textAlign: 'center',
+      }}>
+        <span className="ink-num" style={{
+          fontSize: 'clamp(18px, 3vw, 24px)',
+          fontWeight: 700,
+          color: 'var(--ink-stamp)',
+          display: 'block',
+        }}>
+          {animatedStories}
+        </span>
+        <span className="ink-label ink-mono" style={{
+          fontSize: 10,
+          color: 'var(--ink-ink-soft)',
+          letterSpacing: '.08em',
+          textTransform: 'uppercase',
+          display: 'block',
+          marginTop: 4,
+        }}>
+          Stories Today
+        </span>
       </div>
-      <div className="ink-cell">
-        <span className="ink-num">{animatedDesks}</span>
-        <span className="ink-label">Desks</span>
+
+      <div className="ink-cell" style={{
+        padding: '12px 0',
+        borderRight: '1px solid var(--ink-rule)',
+        textAlign: 'center',
+      }}>
+        <span className="ink-num" style={{
+          fontSize: 'clamp(18px, 3vw, 24px)',
+          fontWeight: 700,
+          color: 'var(--ink-stamp)',
+          display: 'block',
+        }}>
+          {animatedDesks}
+        </span>
+        <span className="ink-label ink-mono" style={{
+          fontSize: 10,
+          color: 'var(--ink-ink-soft)',
+          letterSpacing: '.08em',
+          textTransform: 'uppercase',
+          display: 'block',
+          marginTop: 4,
+        }}>
+          Desks
+        </span>
       </div>
-      <div className="ink-cell">
-        <span className="ink-num">{formatCompact(animatedViews)}</span>
-        <span className="ink-label">Total Views</span>
+
+      <div className="ink-cell" style={{
+        padding: '12px 0',
+        textAlign: 'center',
+      }}>
+        <span className="ink-num" style={{
+          fontSize: 'clamp(18px, 3vw, 24px)',
+          fontWeight: 700,
+          color: 'var(--ink-stamp)',
+          display: 'block',
+        }}>
+          {formatCompact(animatedViews)}
+        </span>
+        <span className="ink-label ink-mono" style={{
+          fontSize: 10,
+          color: 'var(--ink-ink-soft)',
+          letterSpacing: '.08em',
+          textTransform: 'uppercase',
+          display: 'block',
+          marginTop: 4,
+        }}>
+          Total Views
+        </span>
       </div>
     </div>
   );
@@ -137,9 +215,6 @@ const Home = () => {
     }
   }, []);
 
-  // Site-wide (unfiltered) sample used only to compute the ledger numbers,
-  // independent of whatever category/search filter is currently applied
-  // to the main feed below.
   const fetchLedgerStats = useCallback(async () => {
     try {
       const response = await postsAPI.getAll({ limit: 100 });
@@ -200,24 +275,115 @@ const Home = () => {
           border-bottom:2px solid transparent; transition:.2s;
           font-family:'IBM Plex Mono',monospace; white-space:nowrap;
         }
-        @media(max-width:1024px){ .ink-two-col { grid-template-columns: 1fr !important; } }
+        
         .ink-posts-grid { display:flex; flex-direction:column; }
+        
         .ink-skeleton {
           background: linear-gradient(90deg, var(--ink-paper-dim) 25%, var(--ink-rule) 50%, var(--ink-paper-dim) 75%);
           background-size: 400px 100%;
           animation: ink-shimmer 1.5s infinite;
         }
+        
         @keyframes ink-shimmer { 0%{background-position:-400px 0;} 100%{background-position:400px 0;} }
+
+        /* MOBILE FIRST APPROACH */
+        @media (max-width: 640px) {
+          .ink-two-col {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          
+          .ink-sidebar {
+            display: none !important;
+          }
+          
+          .ink-filter-btn {
+            padding: 8px 12px !important;
+            font-size: 10px !important;
+          }
+          
+          .ink-cats-row {
+            padding: 10px 12px !important;
+            gap: 6px !important;
+          }
+          
+          .ink-pill {
+            padding: 6px 12px !important;
+            font-size: 11px !important;
+          }
+          
+          .ink-featured-card {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .ink-article-title {
+            font-size: 20px !important;
+          }
+          
+          .ink-posts-grid {
+            gap: 12px !important;
+          }
+          
+          .ink-detail-wrapper {
+            padding: 12px !important;
+          }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .ink-two-col {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+          }
+          
+          .ink-sidebar {
+            display: block !important;
+          }
+        }
+
+        @media (min-width: 1025px) {
+          .ink-two-col {
+            grid-template-columns: 2fr 1fr !important;
+            gap: 32px !important;
+          }
+        }
       `}</style>
 
       <WireTicker headlines={headlines} posts={breakingPosts} />
       <Ledger storiesToday={ledgerStats.storiesToday} deskCount={CATEGORIES.length} totalViews={ledgerStats.totalViews} />
 
       {/* ── Category pills ── */}
-      <div className="ink-cats-row" style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '14px 18px', borderBottom: '1px solid var(--ink-rule)' }}>
-        <Link to="/" className={`ink-pill ${!category ? 'ink-active' : ''}`}>All Desks</Link>
+      <div className="ink-cats-row" style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '14px 18px', borderBottom: '1px solid var(--ink-rule)', scrollBehavior: 'smooth' }}>
+        <Link to="/" className={`ink-pill ${!category ? 'ink-active' : ''}`} style={{
+          padding: '8px 16px',
+          background: !category ? 'var(--ink-stamp)' : 'transparent',
+          color: !category ? 'white' : 'var(--ink-ink)',
+          border: !category ? 'none' : '1px solid var(--ink-rule)',
+          borderRadius: 4,
+          textDecoration: 'none',
+          fontWeight: 600,
+          fontSize: 12,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          transition: '.2s',
+        }}>
+          All Desks
+        </Link>
         {sidebarCategories.map(cat => (
-          <Link key={cat} to={categoryPath(cat)} className={`ink-pill ${category === cat ? 'ink-active' : ''}`}>
+          <Link key={cat} to={categoryPath(cat)} className={`ink-pill ${category === cat ? 'ink-active' : ''}`} style={{
+            padding: '8px 16px',
+            background: category === cat ? 'var(--ink-stamp)' : 'transparent',
+            color: category === cat ? 'white' : 'var(--ink-ink)',
+            border: category === cat ? 'none' : '1px solid var(--ink-rule)',
+            borderRadius: 4,
+            textDecoration: 'none',
+            fontWeight: 600,
+            fontSize: 12,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            transition: '.2s',
+          }}>
             {cat}
           </Link>
         ))}
@@ -264,7 +430,7 @@ const Home = () => {
 
           {/* ── Main feed column ── */}
           <div>
-            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--ink-rule)', marginBottom: 8, overflowX: 'auto' }}>
+            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--ink-rule)', marginBottom: 8, overflowX: 'auto', scrollBehavior: 'smooth' }}>
               {[
                 { value: 'latest', label: 'Latest', icon: <Clock size={13} /> },
                 { value: 'popular', label: 'Popular', icon: <Flame size={13} /> },
@@ -308,7 +474,7 @@ const Home = () => {
                   {category ? `No posts in "${category}" yet.` : searchQuery ? `No results for "${searchQuery}".` : 'No posts yet. Create your first post in the admin dashboard!'}
                 </p>
                 {(category || searchQuery) && (
-                  <Link to="/" className="ink-btn ink-btn-stamp">View all posts</Link>
+                  <Link to="/" className="ink-btn ink-btn-stamp" style={{ padding: '10px 20px', background: 'var(--ink-stamp)', color: 'white', textDecoration: 'none', borderRadius: 4, fontWeight: 600 }}>View all posts</Link>
                 )}
               </div>
             ) : (
@@ -321,7 +487,7 @@ const Home = () => {
           </div>
 
           {/* ── Sidebar ── */}
-          <div>
+          <div className="ink-sidebar">
             <div className="ink-card" style={{ padding: '20px 18px', marginBottom: 20, position: 'sticky', top: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <h3 className="ink-serif" style={{ fontSize: 15, fontWeight: 600, margin: 0, color: 'var(--ink-ink)' }}>Trending Now</h3>

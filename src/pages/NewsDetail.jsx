@@ -86,7 +86,7 @@ const NewsDetail = () => {
     <div style={{ background: 'var(--ink-paper)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ textAlign: 'center' }}>
         <h2 className="ink-serif" style={{ fontSize: 26, fontWeight: 600, color: 'var(--ink-ink)', marginBottom: 16 }}>Story not found</h2>
-        <Link to="/" className="ink-btn ink-btn-stamp">Go Home</Link>
+        <Link to="/" className="ink-btn ink-btn-stamp" style={{ padding: '10px 20px', background: 'var(--ink-stamp)', color: 'white', textDecoration: 'none', borderRadius: 4, fontWeight: 600 }}>Go Home</Link>
       </div>
     </div>
   );
@@ -130,21 +130,26 @@ const NewsDetail = () => {
           .ink-article-content blockquote { border-left: 3px solid var(--ink-stamp); padding: 12px 20px; background: var(--ink-paper-dim); margin: 20px 0; font-style: italic; }
           .ink-article-content code { background: var(--ink-paper-dim); padding: 2px 6px; font-size: 15px; font-family: 'IBM Plex Mono', monospace; }
 
-          @media (max-width: 768px) {
-            .ink-detail-wrapper { padding: 0 !important; }
-            .ink-detail-back { padding: 16px 18px 0 !important; margin-bottom: 16px !important; }
+          @media (max-width: 640px) {
+            .ink-detail-wrapper { padding: 12px 12px !important; }
+            .ink-detail-back { padding: 12px 0 0 0 !important; margin-bottom: 12px !important; }
             .ink-two-col { grid-template-columns: 1fr !important; gap: 0 !important; }
-            .ink-article-card { border-left: none !important; border-right: none !important; padding: 18px !important; }
-            .ink-article-title { font-size: clamp(22px, 5vw, 32px) !important; }
-            .ink-article-content { font-size: 15px !important; }
+            .ink-article-card { border-left: none !important; border-right: none !important; padding: 16px !important; }
+            .ink-article-title { font-size: 18px !important; line-height: 1.2 !important; }
+            .ink-article-content { font-size: 14px !important; line-height: 1.6 !important; }
+            .ink-article-content h1 { font-size: 20px !important; margin: 20px 0 12px !important; }
+            .ink-article-content h2 { font-size: 18px !important; margin: 18px 0 10px !important; }
+            .ink-share-btn { padding: 6px 12px !important; font-size: 11px !important; }
             .ink-sidebar { display: none !important; }
-            .ink-comments-wrapper { padding: 0 18px 24px !important; }
-            .ink-meta-bar { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+            .ink-comments-wrapper { padding: 0 0 24px !important; }
+            .ink-meta-bar { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; padding: 12px 0 !important; }
           }
-          @media (min-width: 769px) and (max-width: 1024px) {
+
+          @media (min-width: 641px) and (max-width: 1024px) {
             .ink-two-col { grid-template-columns: 1fr !important; }
             .ink-sidebar { display: block !important; }
           }
+
           @media (min-width: 1025px) {
             .ink-two-col { grid-template-columns: 2fr 1fr !important; }
           }
@@ -222,7 +227,7 @@ const NewsDetail = () => {
                 {post.tags?.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--ink-rule)' }}>
                     {post.tags.map(tag => (
-                      <span key={tag} className="ink-pill" style={{ cursor: 'default' }}>#{tag}</span>
+                      <span key={tag} className="ink-pill" style={{ cursor: 'default', padding: '6px 12px', background: 'var(--ink-paper-dim)', border: '1px solid var(--ink-rule)', borderRadius: 4, fontSize: 12 }}>#{tag}</span>
                     ))}
                   </div>
                 )}
@@ -234,7 +239,7 @@ const NewsDetail = () => {
                     excerpt={post.excerpt || post.content.slice(0, 160)}
                   />
 
-                  <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                     <SaveArticle articleId={post._id} articleTitle={post.title} />
                   </div>
 

@@ -40,8 +40,22 @@ const SocialShare = ({ url, title, excerpt }) => {
   };
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '16px 0' }}>
-      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-ink-soft)' }}>SHARE</span>
+    <div style={{
+      display: 'flex',
+      gap: 'clamp(6px, 2vw, 12px)',
+      alignItems: 'center',
+      margin: '16px 0',
+      flexWrap: 'wrap',
+    }}>
+      <span style={{
+        fontSize: 'clamp(10px, 1.5vw, 12px)',
+        fontWeight: 600,
+        color: 'var(--ink-ink-soft)',
+        textTransform: 'uppercase',
+        letterSpacing: '.08em',
+      }}>
+        SHARE
+      </span>
       {shareLinks.map((link) => (
         <a
           key={link.name}
@@ -53,8 +67,8 @@ const SocialShare = ({ url, title, excerpt }) => {
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 32,
-            height: 32,
+            width: 'clamp(28px, 4vw, 32px)',
+            height: 'clamp(28px, 4vw, 32px)',
             borderRadius: '50%',
             backgroundColor: link.color,
             color: 'white',
@@ -64,7 +78,7 @@ const SocialShare = ({ url, title, excerpt }) => {
           onMouseEnter={(e) => e.target.style.opacity = 0.8}
           onMouseLeave={(e) => e.target.style.opacity = 1}
         >
-          <link.icon size={16} />
+          <link.icon size={14} />
         </a>
       ))}
       <button
@@ -74,8 +88,8 @@ const SocialShare = ({ url, title, excerpt }) => {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 32,
-          height: 32,
+          width: 'clamp(28px, 4vw, 32px)',
+          height: 'clamp(28px, 4vw, 32px)',
           borderRadius: '50%',
           backgroundColor: 'var(--ink-rule)',
           border: 'none',
@@ -86,7 +100,7 @@ const SocialShare = ({ url, title, excerpt }) => {
         onMouseEnter={(e) => e.target.style.opacity = 0.8}
         onMouseLeave={(e) => e.target.style.opacity = 1}
       >
-        <Copy size={16} />
+        <Copy size={14} />
       </button>
     </div>
   );

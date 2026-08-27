@@ -34,21 +34,22 @@ const SaveArticle = ({ articleId, articleTitle }) => {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 8,
-        padding: '8px 16px',
+        gap: 'clamp(4px, 1vw, 8px)',
+        padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 16px)',
         border: `1px solid ${isSaved ? 'var(--ink-stamp)' : 'var(--ink-rule)'}`,
         borderRadius: 4,
         backgroundColor: isSaved ? 'rgba(200,50,50,0.1)' : 'transparent',
         color: isSaved ? 'var(--ink-stamp)' : 'var(--ink-ink)',
         cursor: 'pointer',
         fontWeight: 600,
-        fontSize: 12,
+        fontSize: 'clamp(11px, 1.5vw, 12px)',
         transition: 'all 0.2s',
+        whiteSpace: 'nowrap',
       }}
       onMouseEnter={(e) => e.target.style.backgroundColor = isSaved ? 'rgba(200,50,50,0.2)' : 'var(--ink-paper-dim)'}
       onMouseLeave={(e) => e.target.style.backgroundColor = isSaved ? 'rgba(200,50,50,0.1)' : 'transparent'}
     >
-      <Bookmark size={16} fill={isSaved ? 'currentColor' : 'none'} />
+      <Bookmark size={14} fill={isSaved ? 'currentColor' : 'none'} />
       {isSaved ? 'Saved' : 'Save'}
     </button>
   );
