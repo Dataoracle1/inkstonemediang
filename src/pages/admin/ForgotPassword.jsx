@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from "../../context/ThemeContext";
 import toast from 'react-hot-toast';
 
 const ForgotPassword = () => {

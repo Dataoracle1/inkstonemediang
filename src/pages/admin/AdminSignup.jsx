@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, User, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from "../../context/ThemeContext";
 import toast from 'react-hot-toast';
 
 const AdminSignup = () => {

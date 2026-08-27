@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from "../../context/ThemeContext";
 import toast from 'react-hot-toast';
 
 const ResetPassword = () => {
