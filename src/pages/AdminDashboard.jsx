@@ -1,174 +1,342 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import {
-  LayoutDashboard, FileText, FolderKanban, Newspaper, Image as ImageIcon,
-  Users, MessageSquare, BarChart3, Mail, Settings as SettingsIcon,
-  ScrollText, LogOut, Menu, X,
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, LogOut, BarChart3, FileText, Tag, Users, Image, MessageSquare, Settings, Eye, Bell, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { confirmToast } from '../components/admin/AdminUI';
-import toast from 'react-hot-toast';
-
-import DashboardOverview from './admin/DashboardOverview';
-import StoriesManagement from './admin/StoriesManagement';
-import StoryEditor from './admin/StoryEditor';
-import CategoriesManagement from './admin/CategoriesManagement';
-import DesksManagement from './admin/DesksManagement';
-import MediaLibrary from './admin/MediaLibrary';
-import UsersManagement from './admin/UsersManagement';
-import AnalyticsPanel from './admin/AnalyticsPanel';
-import SettingsPanel from './admin/SettingsPanel';
-import ActivityLogsPanel from './admin/ActivityLogsPanel';
+import { useToast } from '../context/ToastContext';
+import DashboardOverview from '../components/DashboardOverview';
+import StoriesManagement from '../components/StoriesManagement';
+import CategoriesManagement from '../components/CategoriesManagement';
+import DesksManagement from '../components/DesksManagement';
+import MediaLibrary from '../components/MediaLibrary';
 import AdminCommentsManagement from '../components/Admincommentsmanagement';
-import NewsletterManagement from '../components/Newslettermanagement';
-
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'stories', label: 'Stories', icon: FileText },
-  { id: 'categories', label: 'Categories', icon: FolderKanban },
-  { id: 'desks', label: 'Desks', icon: Newspaper },
-  { id: 'media', label: 'Media Library', icon: ImageIcon },
-  { id: 'users', label: 'Users', icon: Users },
-  { id: 'comments', label: 'Comments', icon: MessageSquare },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'subscribers', label: 'Subscribers', icon: Mail },
-  { id: 'settings', label: 'Settings', icon: SettingsIcon },
-  { id: 'activity', label: 'Activity Logs', icon: ScrollText },
-];
-
-const SUPER_ADMIN_ONLY = new Set(['users', 'settings', 'activity']);
+import SettingsPanel from '../components/SettingsPanel';
+import ActivityLogsPanel from '../components/ActivityLogsPanel';
+import AnalyticsPanel from '../components/AnalyticsPanel';
+import UsersManagement from '../components/UsersManagement';
+import Newslettermanagement from '../components/Newslettermanagement';
+import Contactsmanagement from '../components/Contactsmanagement';
 
 const AdminDashboard = () => {
-  const { admin, logout, isSuperAdmin } = useAuth();
+  const { isAuthenticated, admin, logout } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const [activeSection, setActiveSection] = useState('dashboard');
-  const [editingPostId, setEditingPostId] = useState(undefined); // undefined = not editing, null = new post, string = editing that post
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/admin/login');
+    } else {
+      setIsAdmin(admin?.role === 'super-admin' || admin?.role === 'admin');
+    }
+  }, [isAuthenticated, navigate, admin]);
 
-  const visibleNavItems = NAV_ITEMS.filter(item => !SUPER_ADMIN_ONLY.has(item.id) || isSuperAdmin);
-
-  const handleLogout = () => confirmToast('Logout?', "You'll need to login again to access the dashboard.", async () => {
+  const handleLogout = () => {
     logout();
-    toast.success('Logged out!');
-    setTimeout(() => navigate('/admin/login'), 500);
-  }, 'Logout', false);
-
-  const openNewStory = () => { setEditingPostId(null); setActiveSection('stories'); };
-  const openEditStory = (postId) => { setEditingPostId(postId); setActiveSection('stories'); };
-  const closeEditor = () => setEditingPostId(undefined);
-
-  const goTo = (id) => {
-    setActiveSection(id);
-    setSidebarOpen(false);
-    if (id !== 'stories') setEditingPostId(undefined);
+    showToast('Logged out successfully', 'success');
+    navigate('/admin/login');
   };
 
-  const renderPanel = () => {
-    if (activeSection === 'stories') {
-      if (editingPostId !== undefined) {
-        return <StoryEditor postId={editingPostId} onClose={closeEditor} onSaved={closeEditor} />;
-      }
-      return <StoriesManagement onEdit={openEditStory} onNew={openNewStory} />;
-    }
+  const menuItems = [
+    { id: 'overview', label: 'Dashboard', icon: BarChart3, public: true },
+    { id: 'stories', label: 'Stories', icon: FileText, public: true },
+    { id: 'categories', label: 'Categories', icon: Tag, public: true },
+    { id: 'desks', label: 'Desks', icon: Home, public: true },
+    { id: 'media', label: 'Media Library', icon: Image, public: true },
+    { id: 'comments', label: 'Comments', icon: MessageCircle, public: true },
+    { id: 'analytics', label: 'Analytics', icon: Eye, public: true },
+    { id: 'subscribers', label: 'Newsletter', icon: Bell, public: true },
+    { id: 'contacts', label: 'Contacts', icon: Users, public: true },
+    { id: 'users', label: 'Users', icon: Users, public: false },
+    { id: 'activity', label: 'Activity', icon: Bell, public: false },
+    { id: 'settings', label: 'Settings', icon: Settings, public: false },
+  ];
+
+  const filteredMenuItems = menuItems.filter(item => !item.public || isAdmin);
+
+  const renderSection = () => {
     switch (activeSection) {
-      case 'dashboard': return <DashboardOverview onNewStory={openNewStory} onGoTo={goTo} />;
+      case 'overview': return <DashboardOverview />;
+      case 'stories': return <StoriesManagement />;
       case 'categories': return <CategoriesManagement />;
       case 'desks': return <DesksManagement />;
       case 'media': return <MediaLibrary />;
-      case 'users': return isSuperAdmin ? <UsersManagement /> : null;
       case 'comments': return <AdminCommentsManagement />;
       case 'analytics': return <AnalyticsPanel />;
-      case 'subscribers': return <NewsletterManagement />;
-      case 'settings': return isSuperAdmin ? <SettingsPanel /> : null;
-      case 'activity': return isSuperAdmin ? <ActivityLogsPanel /> : null;
-      default: return null;
+      case 'subscribers': return <Newslettermanagement />;
+      case 'contacts': return <Contactsmanagement />;
+      case 'users': return isAdmin ? <UsersManagement /> : null;
+      case 'activity': return isAdmin ? <ActivityLogsPanel /> : null;
+      case 'settings': return isAdmin ? <SettingsPanel /> : null;
+      default: return <DashboardOverview />;
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--ink-paper)', display: 'flex' }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#FAF9F6' }}>
       <style>{`
-        @keyframes ink-spin { to { transform: rotate(360deg); } }
-        .admin-sidebar { transition: transform .25s ease; }
-        @media (max-width: 900px) {
-          .admin-sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
-            transform: translateX(-100%);
-          }
-          .admin-sidebar.open { transform: translateX(0); }
-          .admin-sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 190; }
-          .admin-sidebar-backdrop.open { display: block; }
-          .admin-mobile-toggle { display: flex !important; }
+        .admin-sidebar {
+          width: 240px;
+          background: #071A33;
+          color: #eeeadf;
+          border-right: 1px solid rgba(238, 234, 223, 0.1);
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          transition: transform .3s ease;
         }
-        .admin-mobile-toggle { display: none; }
-        .admin-nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; font-family: 'Source Sans 3', sans-serif; font-size: 13.5px; font-weight: 600; color: rgba(238,234,223,.7); transition: .15s; border-left: 3px solid transparent; }
-        .admin-nav-item:hover { background: rgba(238,234,223,.06); color: #eeeadf; }
-        .admin-nav-item.active { background: rgba(168,50,31,.15); color: #eeeadf; border-left-color: var(--ink-stamp); }
+        .admin-sidebar.mobile-open {
+          position: fixed;
+          left: 0;
+          top: 0;
+          height: 100vh;
+          z-index: 100;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .admin-logo {
+          padding: 24px 20px;
+          border-bottom: 1px solid rgba(238, 234, 223, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .admin-logo-text {
+          font-family: "Playfair Display", serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #eeeadf;
+        }
+        .admin-logo-dot {
+          color: #C4422F;
+          font-style: italic;
+        }
+        .admin-close-btn {
+          display: none;
+          background: none;
+          border: none;
+          color: #eeeadf;
+          cursor: pointer;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .admin-menu {
+          flex: 1;
+          padding: 16px 0;
+          overflow-y: auto;
+        }
+        .admin-menu-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 20px;
+          color: rgba(238, 234, 223, 0.7);
+          text-decoration: none;
+          font-size: 13px;
+          font-weight: 500;
+          border-left: 3px solid transparent;
+          cursor: pointer;
+          transition: all .15s;
+          background: none;
+          border: none;
+          width: 100%;
+          text-align: left;
+          font-family: inherit;
+        }
+        .admin-menu-item:hover {
+          background: rgba(238, 234, 223, 0.08);
+          color: #eeeadf;
+        }
+        .admin-menu-item.active {
+          background: rgba(238, 234, 223, 0.08);
+          color: #eeeadf;
+          border-left-color: #C4422F;
+        }
+        .admin-footer {
+          padding: 20px;
+          border-top: 1px solid rgba(238, 234, 223, 0.1);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 12px;
+        }
+        .admin-user-avatar {
+          width: 36px;
+          height: 36px;
+          background: #C4422F;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          color: white;
+        }
+        .admin-logout-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          background: rgba(238, 234, 223, 0.1);
+          border: none;
+          color: #eeeadf;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 11px;
+          font-weight: 600;
+          transition: all .15s;
+          margin-left: auto;
+        }
+        .admin-logout-btn:hover {
+          background: #C4422F;
+          color: white;
+        }
+        .admin-main {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .admin-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px 32px;
+          background: white;
+          border-bottom: 1px solid #e8e4dd;
+        }
+        .admin-topbar-title {
+          font-family: "Playfair Display", serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #071A33;
+          margin: 0;
+        }
+        .admin-menu-toggle {
+          display: none;
+          background: none;
+          border: none;
+          width: 40px;
+          height: 40px;
+          cursor: pointer;
+          color: #071A33;
+          align-items: center;
+          justify-content: center;
+        }
+        .admin-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 32px;
+          background: #FAF9F6;
+        }
+        @media (max-width: 1024px) {
+          .admin-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            transform: translateX(-100%);
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+          .admin-sidebar.mobile-open {
+            transform: translateX(0);
+          }
+          .admin-close-btn { display: flex; }
+          .admin-menu-toggle { display: flex; }
+          .admin-main {
+            width: 100%;
+          }
+          .admin-topbar { padding: 16px 20px; }
+          .admin-content { padding: 20px; }
+        }
       `}</style>
 
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-
-      {sidebarOpen && <div className="admin-sidebar-backdrop open" onClick={() => setSidebarOpen(false)} />}
-
-      {/* -- Sidebar -- */}
-      <aside className={`admin-sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: 240, flexShrink: 0, background: '#161410', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(238,234,223,.1)' }}>
-          <h1 className="ink-serif" style={{ fontSize: 20, fontWeight: 600, color: '#eeeadf', margin: 0, lineHeight: 1 }}>
-            SYD<em style={{ fontStyle: 'italic', color: 'var(--ink-stamp)' }}>LINES</em>
-          </h1>
-          <p className="ink-mono" style={{ fontSize: 9, letterSpacing: '.25em', color: 'rgba(238,234,223,.4)', margin: '5px 0 0' }}>MEDIA</p>
+      {/* SIDEBAR */}
+      <aside className={`admin-sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="admin-logo">
+          <div>
+            <div className="admin-logo-text">
+              SYDLINES<span className="admin-logo-dot">.</span>
+            </div>
+            <div style={{ fontSize: 9, letterSpacing: '.08em', color: 'rgba(238,234,223,.6)', marginTop: 4 }}>ADMIN</div>
+          </div>
+          {isMobileMenuOpen && (
+            <button className="admin-close-btn" onClick={() => setIsMobileMenuOpen(false)}>
+              <X size={20} />
+            </button>
+          )}
         </div>
 
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(238,234,223,.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '1.5px solid var(--ink-stamp)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: 'var(--ink-stamp)', flexShrink: 0 }}>
-            {admin?.name?.[0]?.toUpperCase() || 'A'}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 12.5, fontWeight: 700, color: '#eeeadf', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{admin?.name}</p>
-            <p className="ink-mono" style={{ fontSize: 9.5, color: isSuperAdmin ? 'var(--ink-stamp)' : 'rgba(238,234,223,.5)', margin: '2px 0 0', fontWeight: 700, letterSpacing: '.04em' }}>
-              {isSuperAdmin ? 'SUPER ADMIN' : (admin?.role || 'ADMIN').toUpperCase()}
-            </p>
-          </div>
-        </div>
-
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '10px 0' }}>
-          {visibleNavItems.map(item => {
-            const Icon = item.icon;
-            const active = activeSection === item.id;
-            return (
-              <button key={item.id} className={`admin-nav-item${active ? ' active' : ''}`} onClick={() => goTo(item.id)}>
-                <Icon size={16} />
-                {item.label}
-              </button>
-            );
-          })}
+        <nav className="admin-menu">
+          {filteredMenuItems.map((item) => (
+            <button
+              key={item.id}
+              className={`admin-menu-item ${activeSection === item.id ? 'active' : ''}`}
+              onClick={() => {
+                setActiveSection(item.id);
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              <item.icon size={16} />
+              <span>{item.label}</span>
+            </button>
+          ))}
         </nav>
 
-        <div style={{ padding: 14, borderTop: '1px solid rgba(238,234,223,.1)' }}>
-          <button onClick={handleLogout} className="admin-nav-item" style={{ color: 'rgba(238,234,223,.6)' }}>
-            <LogOut size={16} />
-            Logout
+        <div className="admin-footer">
+          <div className="admin-user-avatar">{admin?.name?.charAt(0).toUpperCase()}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {admin?.name || 'Admin'}
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(238,234,223,.6)' }}>{admin?.role}</div>
+          </div>
+          <button className="admin-logout-btn" onClick={handleLogout}>
+            <LogOut size={14} /> Logout
           </button>
         </div>
       </aside>
 
-      {/* -- Main content -- */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        <div className="admin-mobile-toggle" style={{ alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--ink-rule)', background: 'var(--ink-paper)' }}>
-          <button onClick={() => setSidebarOpen(true)} style={{ background: 'none', border: '1px solid var(--ink-rule)', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink-ink)' }}>
-            <Menu size={18} />
+      {/* MAIN */}
+      <main className="admin-main">
+        {/* TOPBAR */}
+        <div className="admin-topbar">
+          <button className="admin-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <span className="ink-serif" style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-ink)' }}>
-            SYD<em style={{ fontStyle: 'italic', color: 'var(--ink-stamp)' }}>LINES</em>
-          </span>
+          <h1 className="admin-topbar-title">
+            {filteredMenuItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
+          </h1>
+          <div style={{ fontSize: 12, color: '#64748B', fontFamily: '"IBM Plex Mono", monospace' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+          </div>
         </div>
 
-        <div style={{ flex: 1, padding: '28px 24px 60px', maxWidth: 1400, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
-          {renderPanel()}
+        {/* CONTENT */}
+        <div className="admin-content">
+          {renderSection()}
         </div>
-      </div>
+      </main>
+
+      {/* MOBILE BACKDROP */}
+      {isMobileMenuOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 99,
+          }}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 };

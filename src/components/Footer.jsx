@@ -1,196 +1,320 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Mail, X } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { Mail, Facebook, Twitter, Linkedin, Send } from 'lucide-react';
 import { newsletterAPI } from '../utils/api';
-import { categoryPath } from '../utils/categoryUtils';
+import { useTheme } from '../context/ThemeContext';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const { isDark } = useTheme();
   const [email, setEmail] = useState('');
-  const { showToast } = useToast();
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState('');
 
-  const handleSubscribe = async (e) => {
+  const handleNewsletterSubscribe = async (e) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      showToast('Please enter a valid email address', 'error');
-      return;
-    }
-    try {
-      const response = await newsletterAPI.subscribe(email.trim());
-      showToast(response.data.message || 'Please check your email to confirm subscription!', 'success');
-      setEmail('');
-      setShowSubscribeModal(false);
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Subscription failed. Please try again.';
-      showToast(errorMsg, 'error');
-    }
-  };
+    if (!email) return;
 
-  const footerLinks = {
-    'Quick Links': [
-      { name: 'Home', path: '/' },
-      { name: 'About Us', path: '/about' },
-      { name: 'Contact', path: '/contact' },
-      { name: 'Privacy Policy', path: '/privacy' },
-    ],
-    'Categories': [
-      { name: 'Breaking News', path: categoryPath('Breaking News') },
-      { name: 'Sports', path: categoryPath('Sports') },
-      { name: 'Entertainment', path: categoryPath('Entertainment') },
-      { name: 'Technology', path: categoryPath('Technology') },
-    ],
-    'Follow Us': [
-      { name: 'Facebook', icon: Facebook, url: 'https://facebook.com/sydlinesmedia' },
-      { name: 'Twitter', icon: Twitter, url: 'https://twitter.com/sydlinesmedia' },
-      { name: 'Instagram', icon: Instagram, url: 'https://instagram.com/sydlinesmedia' },
-      { name: 'YouTube', icon: Youtube, url: 'https://youtube.com/@sydlinesmedia' },
-    ],
+    try {
+      setSubscribeLoading(true);
+      await newsletterAPI.subscribe?.({ email }) || Promise.resolve();
+      setSubscribeMessage('✓ Subscribed! Check your email to confirm.');
+      setEmail('');
+      setTimeout(() => setSubscribeMessage(''), 3000);
+    } catch (error) {
+      setSubscribeMessage('Failed to subscribe. Try again.');
+      setTimeout(() => setSubscribeMessage(''), 3000);
+    } finally {
+      setSubscribeLoading(false);
+    }
   };
 
   return (
-    <>
+    <footer style={{
+      background: isDark ? '#0D1117' : '#071A33',
+      color: isDark ? '#C9D1D9' : '#FAF9F6',
+      borderTop: `1px solid ${isDark ? '#30363D' : '#C4422F'}`,
+      transition: 'all 0.3s ease',
+    }}>
       <style>{`
-        .ink-footer-link { color: rgba(238,234,223,.7); font-size: 13px; text-decoration: none; transition: .15s; display: block; padding: 6px 0; font-family: 'IBM Plex Mono', monospace; }
-        .ink-footer-link:hover { color: var(--ink-stamp); }
-        .ink-social-btn {
-          width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center;
-          justify-content: center; border: 1px solid rgba(238,234,223,.2); transition: .2s;
-          text-decoration: none; color: rgba(238,234,223,.7);
+        .footer-container {
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 60px 40px 40px;
         }
-        .ink-social-btn:hover { background: var(--ink-stamp); border-color: var(--ink-stamp); color: #fff; transform: translateY(-2px); }
+
+        .footer-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 40px;
+          margin-bottom: 40px;
+          padding-bottom: 40px;
+          border-bottom: 1px solid ${isDark ? '#30363D' : '#C4422F'};
+        }
+
+        .footer-section h3 {
+          font-family: "Playfair Display", serif;
+          font-size: 18px;
+          font-weight: 700;
+          margin: 0 0 20px;
+          color: ${isDark ? '#E8E4DD' : '#FAF9F6'};
+        }
+
+        .footer-section ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .footer-section li {
+          margin-bottom: 12px;
+        }
+
+        .footer-link {
+          color: ${isDark ? '#C9D1D9' : '#FAF9F6'};
+          text-decoration: none;
+          font-size: 14px;
+          line-height: 1.6;
+          transition: all 0.2s ease;
+        }
+
+        .footer-link:hover {
+          color: #C4422F;
+          padding-left: 4px;
+        }
+
+        .footer-social {
+          display: flex;
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        .social-icon {
+          width: 36px;
+          height: 36px;
+          border: 1px solid ${isDark ? '#30363D' : '#C4422F'};
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #C4422F;
+          transition: all 0.2s ease;
+        }
+
+        .social-icon:hover {
+          background: rgba(196, 66, 47, 0.1);
+          border-color: #C4422F;
+        }
+
+        .newsletter-section {
+          grid-column: 1 / -1;
+        }
+
+        .newsletter-form {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .newsletter-input {
+          flex: 1;
+          padding: 10px 14px;
+          background: ${isDark ? '#161B22' : 'rgba(255,255,255,0.1)'};
+          border: 1px solid ${isDark ? '#30363D' : 'rgba(255,255,255,0.2)'};
+          border-radius: 4px;
+          color: ${isDark ? '#E8E4DD' : '#FAF9F6'};
+          font-family: inherit;
+          font-size: 14px;
+          transition: all 0.2s ease;
+        }
+
+        .newsletter-input::placeholder {
+          color: ${isDark ? '#8B949E' : 'rgba(255,255,255,0.5)'};
+        }
+
+        .newsletter-input:focus {
+          outline: none;
+          border-color: #C4422F;
+          background: ${isDark ? '#0D1117' : 'rgba(255,255,255,0.15)'};
+        }
+
+        .newsletter-btn {
+          padding: 10px 20px;
+          background: #C4422F;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s ease;
+        }
+
+        .newsletter-btn:hover {
+          background: #B23620;
+          transform: translateY(-2px);
+        }
+
+        .newsletter-message {
+          font-size: 12px;
+          margin-top: 8px;
+          color: #22c55e;
+          font-weight: 600;
+        }
+
+        .footer-bottom {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 20px;
+          border-top: 1px solid ${isDark ? '#30363D' : 'rgba(255,255,255,0.1)'};
+          font-size: 12px;
+          color: ${isDark ? '#8B949E' : 'rgba(255,255,255,0.7)'};
+          flex-wrap: wrap;
+          gap: 20px;
+        }
+
+        .footer-logo {
+          font-family: "Playfair Display", serif;
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+
+        .footer-tagline {
+          font-size: 12px;
+          color: ${isDark ? '#8B949E' : 'rgba(255,255,255,0.6)'};
+          font-style: italic;
+        }
+
+        .footer-brand {
+          max-width: 200px;
+        }
+
+        @media (max-width: 768px) {
+          .footer-container {
+            padding: 40px 20px 30px;
+          }
+
+          .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+          }
+
+          .footer-bottom {
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+          }
+
+          .newsletter-form {
+            flex-direction: column;
+          }
+
+          .newsletter-btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
       `}</style>
 
-      <footer style={{ background: 'var(--ink-wire)', color: 'rgba(238,234,223,.75)', marginTop: 64 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 36, marginBottom: 36 }}>
-
-            {/* Brand */}
-            <div>
-              <div style={{ marginBottom: 14 }}>
-                <h3 className="ink-serif" style={{ fontSize: 26, fontWeight: 600, color: '#eeeadf', lineHeight: .9, margin: 0, letterSpacing: '-.03em' }}>
-                  SYD<em style={{ fontStyle: 'italic', fontWeight: 500, color: 'var(--ink-stamp)' }}>LINES</em><span style={{ fontStyle: 'normal', color: 'var(--ink-stamp)' }}>.</span>
-                </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
-                  <span style={{ width: 18, height: 1, background: 'rgba(238,234,223,.25)' }} />
-                  <span className="ink-mono" style={{ fontSize: 9, letterSpacing: '.28em', color: 'rgba(238,234,223,.55)', fontWeight: 600 }}>MEDIA</span>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 18 }}>
-                Your trusted wire for breaking news, sports, and entertainment stories from around the world.
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {footerLinks['Follow Us'].map(({ name, icon: Icon, url }) => (
-                  <a key={name} href={url} target="_blank" rel="noopener noreferrer" className="ink-social-btn" title={name}>
-                    <Icon size={16} />
-                  </a>
-                ))}
-              </div>
+      <div className="footer-container">
+        <div className="footer-grid">
+          {/* Brand Section */}
+          <div className="footer-brand">
+            <div className="footer-logo">
+              <span style={{ color: isDark ? '#E8E4DD' : '#FAF9F6' }}>SYD</span>
+              <span style={{ color: '#C4422F', fontStyle: 'italic' }}>LINES.</span>
             </div>
-
-            {/* Quick Links */}
-            <div>
-              <h4 className="ink-mono" style={{ color: '#eeeadf', fontWeight: 600, marginBottom: 14, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>Quick Links</h4>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {footerLinks['Quick Links'].map(link => (
-                  <Link key={link.name} to={link.path} className="ink-footer-link">{link.name}</Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Categories */}
-            <div>
-              <h4 className="ink-mono" style={{ color: '#eeeadf', fontWeight: 600, marginBottom: 14, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>Desks</h4>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {footerLinks['Categories'].map(link => (
-                  <Link key={link.name} to={link.path} className="ink-footer-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                    {link.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Newsletter */}
-            <div>
-              <h4 className="ink-mono" style={{ color: '#eeeadf', fontWeight: 600, marginBottom: 14, fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>Newsletter</h4>
-              <p style={{ fontSize: 13, marginBottom: 14, lineHeight: 1.7 }}>
-                Subscribe to get the wire delivered to your inbox.
-              </p>
-              <button onClick={() => setShowSubscribeModal(true)} className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: '11px' }}>
-                <Mail size={14} />
-                Subscribe
-              </button>
+            <div className="footer-tagline">Smart News. Real Impact.</div>
+            <div className="footer-social">
+              <a href="https://facebook.com" className="social-icon" title="Facebook" target="_blank" rel="noopener noreferrer">
+                <Facebook size={16} />
+              </a>
+              <a href="https://twitter.com" className="social-icon" title="Twitter" target="_blank" rel="noopener noreferrer">
+                <Twitter size={16} />
+              </a>
+              <a href="https://linkedin.com" className="social-icon" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+                <Linkedin size={16} />
+              </a>
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div style={{ borderTop: '1px solid rgba(238,234,223,.12)', paddingTop: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <p className="ink-mono" style={{ fontSize: 11, letterSpacing: '.05em' }}>
-              &copy; {currentYear} SYDLINES MEDIA &mdash; REPORTED, NOT REPEATED
-            </p>
-            <div style={{ display: 'flex', gap: 18 }}>
-              <Link to="/terms" className="ink-footer-link" style={{ padding: 0 }}>Terms of Service</Link>
-              <Link to="/privacy" className="ink-footer-link" style={{ padding: 0 }}>Privacy Policy</Link>
-              <Link to="/admin/login" className="ink-footer-link" style={{ padding: 0 }}>Admin Login</Link>
-            </div>
+          {/* Quick Links */}
+          <div className="footer-section">
+            <h3>Quick Links</h3>
+            <ul>
+              <li><a href="/" className="footer-link">Home</a></li>
+              <li><a href="/about" className="footer-link">About Us</a></li>
+              <li><a href="/contact" className="footer-link">Contact</a></li>
+              <li><a href="/admin/login" className="footer-link">Admin</a></li>
+            </ul>
           </div>
-        </div>
-      </footer>
 
-      {/* Subscribe Modal */}
-      {showSubscribeModal && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-          onClick={() => setShowSubscribeModal(false)}
-        >
-          <div
-            style={{ background: 'var(--ink-paper)', border: '1px solid var(--ink-rule)', borderRadius: 4, boxShadow: '0 24px 64px rgba(0,0,0,.2)', maxWidth: 460, width: '100%', padding: 32 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid var(--ink-stamp)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Mail color="var(--ink-stamp)" size={20} />
-                </div>
-                <h3 className="ink-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--ink-ink)', margin: 0 }}>Subscribe</h3>
-              </div>
-              <button
-                onClick={() => setShowSubscribeModal(false)}
-                style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--ink-rule)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink-ink-soft)' }}
-              >
-                <X size={18} />
-              </button>
-            </div>
+          {/* Categories */}
+          <div className="footer-section">
+            <h3>Categories</h3>
+            <ul>
+              <li><a href="/?category=Breaking%20News" className="footer-link">Breaking News</a></li>
+              <li><a href="/?category=Business" className="footer-link">Business</a></li>
+              <li><a href="/?category=Technology" className="footer-link">Technology</a></li>
+              <li><a href="/?category=Sports" className="footer-link">Sports</a></li>
+            </ul>
+          </div>
 
-            <p style={{ fontSize: 14, color: 'var(--ink-ink-soft)', marginBottom: 22, lineHeight: 1.6 }}>
-              Get the latest news and updates delivered to your inbox. Stay informed with SYDLINES MEDIA.
+          {/* Legal */}
+          <div className="footer-section">
+            <h3>Legal</h3>
+            <ul>
+              <li><a href="/privacy" className="footer-link">Privacy Policy</a></li>
+              <li><a href="/terms" className="footer-link">Terms of Service</a></li>
+              <li><a href="#" className="footer-link">Cookie Policy</a></li>
+              <li><a href="#" className="footer-link">Advertising</a></li>
+            </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div className="footer-section newsletter-section">
+            <h3>
+              <Mail size={18} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+              Subscribe to Our Newsletter
+            </h3>
+            <p style={{ fontSize: 13, color: isDark ? '#8B949E' : 'rgba(255,255,255,0.7)', margin: '8px 0' }}>
+              Get the latest news delivered to your inbox
             </p>
-
-            <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label className="ink-mono" style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--ink-ink-soft)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.1em' }}>
-                  Email Address
-                </label>
+            <form onSubmit={handleNewsletterSubscribe}>
+              <div className="newsletter-form">
                 <input
-                  type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required
-                  style={{ width: '100%', padding: '11px 15px', border: '1px solid var(--ink-rule)', borderRadius: 4, fontSize: 14, outline: 'none', boxSizing: 'border-box', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)' }}
+                  type="email"
+                  className="newsletter-input"
+                  placeholder="Enter your email..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button type="submit" className="ink-btn ink-btn-stamp" style={{ flex: 1, justifyContent: 'center', padding: '12px' }}>
-                  Subscribe Now
-                </button>
-                <button type="button" onClick={() => setShowSubscribeModal(false)} className="ink-btn" style={{ justifyContent: 'center', padding: '12px 20px' }}>
-                  Cancel
+                <button type="submit" className="newsletter-btn" disabled={subscribeLoading}>
+                  <Send size={14} />
+                  {subscribeLoading ? 'Sending...' : 'Subscribe'}
                 </button>
               </div>
+              {subscribeMessage && <div className="newsletter-message">{subscribeMessage}</div>}
             </form>
           </div>
         </div>
-      )}
-    </>
+
+        {/* Footer Bottom */}
+        <div className="footer-bottom">
+          <div style={{ flex: 1 }}>
+            © 2024 SYDLINES MEDIA. All rights reserved. | Crafted with 📰 in Nigeria
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            Made by <a href="#" style={{ color: '#C4422F', textDecoration: 'none' }}>Qdev</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 };
 

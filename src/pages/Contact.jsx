@@ -7,27 +7,11 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [errors, setErrors] = useState({});
-  const [serverMessage, setServerMessage] = useState('');
-
-  const inputStyle = (hasError) => ({
-    width: '100%',
-    padding: '11px 15px',
-    background: 'var(--ink-paper-dim)',
-    border: `1px solid ${hasError ? 'var(--ink-stamp)' : 'var(--ink-rule)'}`,
-    borderRadius: 2,
-    fontSize: 14,
-    color: 'var(--ink-ink)',
-    outline: 'none',
-    transition: 'border-color .2s',
-    boxSizing: 'border-box',
-    fontFamily: "'Source Sans 3', sans-serif",
-  });
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     else if (formData.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
-    else if (formData.name.trim().length > 100) newErrors.name = 'Name cannot exceed 100 characters';
     else if (!/^[a-zA-Z\s'-]+$/.test(formData.name)) newErrors.name = 'Name can only contain letters, spaces, hyphens and apostrophes';
 
     if (!formData.email.trim()) newErrors.email = 'Email is required';
@@ -35,11 +19,9 @@ const Contact = () => {
 
     if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
     else if (formData.subject.trim().length < 3) newErrors.subject = 'Subject must be at least 3 characters';
-    else if (formData.subject.trim().length > 200) newErrors.subject = 'Subject cannot exceed 200 characters';
 
     if (!formData.message.trim()) newErrors.message = 'Message is required';
     else if (formData.message.trim().length < 10) newErrors.message = 'Message must be at least 10 characters';
-    else if (formData.message.trim().length > 5000) newErrors.message = 'Message cannot exceed 5000 characters';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -48,229 +30,330 @@ const Contact = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    if (errors[name]) setErrors({ ...errors, [name]: null });
-    if (submitStatus) { setSubmitStatus(null); setServerMessage(''); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitStatus(null);
-    setServerMessage('');
     if (!validateForm()) return;
+
     setIsSubmitting(true);
+    setSubmitStatus(null);
+
     try {
       const response = await contactsAPI.submit({
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        subject: formData.subject.trim(),
-        message: formData.message.trim(),
+        ...formData,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
       });
-      setSubmitStatus('success');
-      setServerMessage(response.data.message || 'Thank you! Your message has been sent successfully.');
+      setSubmitStatus({ success: true, message: response.data?.message || 'Message sent successfully!' });
       setFormData({ name: '', email: '', subject: '', message: '' });
       setErrors({});
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => setSubmitStatus(null), 5000);
     } catch (error) {
-      setSubmitStatus('error');
-      if (error.response) {
-        if (error.response.status === 429) {
-          setServerMessage('Too many submissions. Please try again in a few minutes.');
-        } else if (error.response.status === 400 && error.response.data.errors) {
-          const serverErrors = {};
-          error.response.data.errors.forEach(err => { serverErrors[err.field] = err.message; });
-          setErrors(serverErrors);
-          setServerMessage('Please fix the errors below.');
-        } else {
-          setServerMessage(error.response.data.message || 'Something went wrong. Please try again.');
-        }
-      } else if (error.request) {
-        setServerMessage('Network error. Please check your connection and try again.');
-      } else {
-        setServerMessage('An unexpected error occurred. Please try again.');
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setSubmitStatus({ success: false, message: error.response?.data?.message || 'Failed to send message. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const ErrorMsg = ({ msg }) => msg ? (
-    <p className="ink-mono" style={{ marginTop: 6, fontSize: 12, color: 'var(--ink-stamp)', display: 'flex', alignItems: 'center', gap: 4 }}>
-      <AlertCircle size={12} /> {msg}
-    </p>
-  ) : null;
-
-  const Label = ({ htmlFor, children }) => (
-    <label htmlFor={htmlFor} className="ink-mono" style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--ink-ink-soft)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-      {children}
-    </label>
-  );
-
-  const InfoRow = ({ icon: Icon, title, children }) => (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-      <div style={{ width: 38, height: 38, border: '1.5px solid var(--ink-stamp)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={17} color="var(--ink-stamp)" />
-      </div>
-      <div>
-        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-ink)', marginBottom: 4 }}>{title}</p>
-        <div style={{ fontSize: 13, color: 'var(--ink-ink-soft)', lineHeight: 1.6 }}>{children}</div>
-      </div>
-    </div>
-  );
-
   return (
-    <div style={{ minHeight: '100vh', padding: '56px 18px 80px' }}>
+    <div style={{ background: '#FAF9F6', minHeight: '100vh' }}>
       <style>{`
-        @keyframes ink-spin { to { transform: rotate(360deg); } }
-        .ink-contact-input:focus { border-color: var(--ink-stamp) !important; }
-        .ink-contact-link { color: var(--ink-ink-soft); text-decoration: none; transition: color .15s; }
-        .ink-contact-link:hover { color: var(--ink-stamp) !important; }
+        .contact-container {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 18px;
+          box-sizing: border-box;
+        }
+        .contact-hero {
+          padding: 60px 0;
+          text-align: center;
+          border-bottom: 1px solid #e8e4dd;
+        }
+        .contact-hero h1 {
+          font-family: "Playfair Display", serif;
+          font-size: clamp(36px, 5vw, 48px);
+          font-weight: 700;
+          color: #071A33;
+          margin: 0 0 16px;
+        }
+        .contact-hero p {
+          font-size: 16px;
+          color: #64748B;
+          margin: 0;
+          max-width: 600px;
+          line-height: 1.6;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .contact-grid {
+          display: grid;
+          grid-template-columns: 1fr 2fr;
+          gap: 60px;
+          padding: 60px 0;
+        }
+        .contact-info-card {
+          background: white;
+          border: 1px solid #e8e4dd;
+          border-radius: 8px;
+          padding: 24px;
+          display: flex;
+          gap: 16px;
+          margin-bottom: 20px;
+        }
+        .contact-icon {
+          width: 48px;
+          height: 48px;
+          background: rgba(196, 66, 47, 0.1);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #C4422F;
+          flex-shrink: 0;
+        }
+        .contact-info-content h3 {
+          font-family: "Playfair Display", serif;
+          font-size: 16px;
+          font-weight: 700;
+          color: #071A33;
+          margin: 0 0 4px;
+        }
+        .contact-info-content p {
+          font-size: 13px;
+          color: #64748B;
+          margin: 0;
+          line-height: 1.6;
+        }
+        .contact-form {
+          background: white;
+          border: 1px solid #e8e4dd;
+          border-radius: 8px;
+          padding: 40px;
+        }
+        .form-group {
+          margin-bottom: 24px;
+        }
+        .form-label {
+          display: block;
+          font-family: "IBM Plex Mono", monospace;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          color: #64748B;
+          margin-bottom: 8px;
+        }
+        .form-input,
+        .form-textarea {
+          width: 100%;
+          padding: 12px 14px;
+          border: 1px solid #e8e4dd;
+          border-radius: 4px;
+          font-family: "Inter", sans-serif;
+          font-size: 14px;
+          color: #071A33;
+          box-sizing: border-box;
+          transition: border-color .15s;
+        }
+        .form-input:focus,
+        .form-textarea:focus {
+          outline: none;
+          border-color: #C4422F;
+          box-shadow: 0 0 0 3px rgba(196, 66, 47, 0.1);
+        }
+        .form-textarea {
+          resize: vertical;
+          min-height: 150px;
+          font-family: "Inter", sans-serif;
+        }
+        .form-error {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 8px 12px;
+          background: rgba(239, 68, 68, 0.08);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          border-radius: 4px;
+          color: #dc2626;
+          font-size: 12px;
+          margin-top: 6px;
+        }
+        .submit-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          padding: 14px 20px;
+          background: #C4422F;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 13px;
+          font-family: "IBM Plex Mono", monospace;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+          transition: opacity .15s;
+          justify-content: center;
+        }
+        .submit-btn:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+        .submit-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .status-message {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 16px;
+          border-radius: 4px;
+          margin-bottom: 24px;
+          border-left: 4px solid;
+        }
+        .status-success {
+          background: rgba(34, 197, 94, 0.08);
+          border-left-color: #22c55e;
+          color: #15803d;
+        }
+        .status-error {
+          background: rgba(239, 68, 68, 0.08);
+          border-left-color: #ef4444;
+          color: #dc2626;
+        }
+        @media (max-width: 1024px) {
+          .contact-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+            padding: 40px 0;
+          }
+        }
+        @media (max-width: 640px) {
+          .contact-hero { padding: 40px 0; }
+          .contact-hero h1 { font-size: 28px; }
+          .contact-form { padding: 24px; }
+          .contact-info-card { gap: 12px; margin-bottom: 16px; }
+        }
       `}</style>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="ink-stamp-badge" style={{ marginBottom: 20 }}>
-            <MessageSquare size={12} /> Contact Us
-          </div>
-          <h1 className="ink-serif" style={{ fontSize: 'clamp(32px,5vw,48px)', fontWeight: 600, color: 'var(--ink-ink)', margin: '0 0 16px', lineHeight: 1.15 }}>
-            Get In Touch
-          </h1>
-          <p style={{ fontSize: 15, color: 'var(--ink-ink-soft)', maxWidth: 540, margin: '0 auto', lineHeight: 1.7 }}>
-            Have a question, suggestion, or feedback? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-          </p>
+      {/* HERO */}
+      <div className="contact-container">
+        <div className="contact-hero">
+          <h1>Get In Touch</h1>
+          <p>Have a story tip, question, or advertising inquiry? We're here to listen and respond.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
+        {/* CONTACT GRID */}
+        <div className="contact-grid">
+          {/* INFO */}
+          <div>
+            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: 24, fontWeight: 700, color: '#071A33', margin: '0 0 24px' }}>
+              Contact Information
+            </h2>
 
-          {/* Form */}
-          <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
-            <div className="ink-card" style={{ padding: '32px 28px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-                <div style={{ width: 40, height: 40, border: '1.5px solid var(--ink-stamp)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <MessageSquare size={19} color="var(--ink-stamp)" />
-                </div>
-                <h2 className="ink-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--ink-ink)', margin: 0 }}>Send Us a Message</h2>
+            <div className="contact-info-card">
+              <div className="contact-icon"><Mail size={20} /></div>
+              <div className="contact-info-content">
+                <h3>Email</h3>
+                <p><a href="mailto:hello@sydlines.com" style={{ color: '#C4422F', textDecoration: 'none' }}>hello@sydlines.com</a></p>
               </div>
+            </div>
 
-              {submitStatus === 'success' && (
-                <div style={{ marginBottom: 24, padding: '14px 18px', borderLeft: '3px solid var(--ink-wire-bright)', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <CheckCircle size={20} color="var(--ink-wire-bright)" style={{ flexShrink: 0, marginTop: 1 }} />
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-wire-bright)', marginBottom: 4 }}>Message Sent!</p>
-                    <p style={{ fontSize: 13, color: 'var(--ink-ink-soft)' }}>{serverMessage}</p>
-                  </div>
-                </div>
-              )}
-              {submitStatus === 'error' && (
-                <div style={{ marginBottom: 24, padding: '14px 18px', borderLeft: '3px solid var(--ink-stamp)', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <AlertCircle size={20} color="var(--ink-stamp)" style={{ flexShrink: 0, marginTop: 1 }} />
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-stamp)', marginBottom: 4 }}>Something went wrong</p>
-                    <p style={{ fontSize: 13, color: 'var(--ink-ink-soft)' }}>{serverMessage}</p>
-                  </div>
-                </div>
-              )}
+            <div className="contact-info-card">
+              <div className="contact-icon"><MapPin size={20} /></div>
+              <div className="contact-info-content">
+                <h3>Location</h3>
+                <p>Lagos, Nigeria</p>
+              </div>
+            </div>
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18 }}>
-                  <div>
-                    <Label htmlFor="name">Full Name *</Label>
-                    <input id="name" name="name" type="text" value={formData.name} onChange={handleChange}
-                      disabled={isSubmitting} className="ink-contact-input"
-                      style={inputStyle(!!errors.name)} />
-                    <ErrorMsg msg={errors.name} />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email Address *</Label>
-                    <input id="email" name="email" type="email" value={formData.email} onChange={handleChange}
-                      disabled={isSubmitting} placeholder="you@example.com" className="ink-contact-input"
-                      style={inputStyle(!!errors.email)} />
-                    <ErrorMsg msg={errors.email} />
-                  </div>
-                </div>
+            <div className="contact-info-card">
+              <div className="contact-icon"><Phone size={20} /></div>
+              <div className="contact-info-content">
+                <h3>Phone</h3>
+                <p><a href="tel:+234123456789" style={{ color: '#C4422F', textDecoration: 'none' }}>+234 (123) 456-789</a></p>
+              </div>
+            </div>
 
-                <div>
-                  <Label htmlFor="subject">Subject *</Label>
-                  <input id="subject" name="subject" type="text" value={formData.subject} onChange={handleChange}
-                    disabled={isSubmitting} placeholder="What is this regarding?" className="ink-contact-input"
-                    style={inputStyle(!!errors.subject)} />
-                  <ErrorMsg msg={errors.subject} />
-                </div>
-
-                <div>
-                  <Label htmlFor="message">
-                    Message * <span style={{ fontWeight: 400, color: 'var(--ink-ink-soft)', textTransform: 'none' }}>({formData.message.length}/5000)</span>
-                  </Label>
-                  <textarea id="message" name="message" value={formData.message} onChange={handleChange}
-                    disabled={isSubmitting} rows={6} placeholder="Tell us more about your inquiry..." className="ink-contact-input"
-                    style={{ ...inputStyle(!!errors.message), resize: 'vertical', minHeight: 140 }} />
-                  <ErrorMsg msg={errors.message} />
-                </div>
-
-                <div>
-                  <button type="submit" disabled={isSubmitting} className="ink-btn ink-btn-stamp" style={{ width: '100%', justifyContent: 'center', padding: '13px', opacity: isSubmitting ? .75 : 1 }}>
-                    {isSubmitting ? (
-                      <>
-                        <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.4)', borderTopColor: 'white', borderRadius: '50%', animation: 'ink-spin .8s linear infinite' }} />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={15} />
-                        Send Message
-                      </>
-                    )}
-                  </button>
-                  <p className="ink-mono" style={{ textAlign: 'center', fontSize: 11, color: 'var(--ink-ink-soft)', marginTop: 12 }}>
-                    We typically respond within 24&ndash;48 hours during business days.
-                  </p>
-                </div>
-              </form>
+            <div className="contact-info-card">
+              <div className="contact-icon"><Clock size={20} /></div>
+              <div className="contact-info-content">
+                <h3>Business Hours</h3>
+                <p>Monday - Friday: 9:00 AM - 6:00 PM WAT<br />Saturday - Sunday: Closed</p>
+              </div>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-            <div className="ink-card" style={{ padding: '24px' }}>
-              <h3 className="ink-serif" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-ink)', marginBottom: 20 }}>Contact Information</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <InfoRow icon={Mail} title="Email">
-                  <a href="mailto:contact@sydlines.media" className="ink-contact-link">contact@sydlines.media</a>
-                </InfoRow>
-                <div style={{ height: 1, background: 'var(--ink-rule)' }} />
-                <InfoRow icon={Phone} title="Phone">
-                  <a href="tel:+2347046678039" className="ink-contact-link">+234 704 667 8039</a>
-                </InfoRow>
-                <div style={{ height: 1, background: 'var(--ink-rule)' }} />
-                <InfoRow icon={MapPin} title="Address">
-                  <span>123 Media Street<br />Lagos, Nigeria</span>
-                </InfoRow>
-                <div style={{ height: 1, background: 'var(--ink-rule)' }} />
-                <InfoRow icon={Clock} title="Business Hours">
-                  <span>Monday &ndash; Friday<br />9:00 AM &ndash; 6:00 PM WAT</span>
-                </InfoRow>
+          {/* FORM */}
+          <div className="contact-form">
+            {submitStatus && (
+              <div className={`status-message ${submitStatus.success ? 'status-success' : 'status-error'}`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {submitStatus.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span>{submitStatus.message}</span>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="ink-card" style={{ padding: '24px' }}>
-              <h3 className="ink-serif" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink-ink)', marginBottom: 16 }}>Quick Links</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[
-                  { href: '/about', label: 'About Us' },
-                  { href: '/privacy', label: 'Privacy Policy' },
-                  { href: '/terms', label: 'Terms of Service' },
-                ].map(link => (
-                  <a key={link.href} href={link.href} className="ink-contact-link" style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-                    <span style={{ color: 'var(--ink-stamp)' }}>&rarr;</span>
-                    {link.label}
-                  </a>
-                ))}
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="John Doe"
+                  className="form-input"
+                />
+                {errors.name && <div className="form-error"><AlertCircle size={14} /> {errors.name}</div>}
               </div>
-            </div>
 
+              <div className="form-group">
+                <label className="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="john@example.com"
+                  className="form-input"
+                />
+                {errors.email && <div className="form-error"><AlertCircle size={14} /> {errors.email}</div>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Subject *</label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  placeholder="How can we help?"
+                  className="form-input"
+                />
+                {errors.subject && <div className="form-error"><AlertCircle size={14} /> {errors.subject}</div>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Message *</label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Tell us more..."
+                  className="form-textarea"
+                />
+                {errors.message && <div className="form-error"><AlertCircle size={14} /> {errors.message}</div>}
+              </div>
+
+              <button type="submit" disabled={isSubmitting} className="submit-btn">
+                <Send size={16} /> {isSubmitting ? 'Sending...' : 'Send Message'}
+              </button>
+            </form>
           </div>
         </div>
       </div>

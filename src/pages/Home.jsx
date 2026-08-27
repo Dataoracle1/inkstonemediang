@@ -1,330 +1,240 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link, useSearchParams, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { postsAPI } from '../utils/api';
-import NewsCard from '../components/NewsCard';
-import TrendingPost from '../components/TrendingPost';
-import { TrendingUp, Clock, Flame } from 'lucide-react';
-import { CATEGORIES, categoryPath, slugToCategory } from '../utils/categoryUtils';
-
-/* ── Wire ticker across the top of the feed ── */
-const WireTicker = ({ headlines }) => {
-  if (!headlines.length) return null;
-  const doubled = [...headlines, ...headlines];
-  return (
-    <div style={{ background: 'var(--ink-wire)', overflow: 'hidden', position: 'relative', borderBottom: '1px solid var(--ink-rule)' }}>
-      <div style={{
-        position: 'absolute', left: 0, top: 0, bottom: 0, background: 'var(--ink-stamp)', color: '#fff',
-        display: 'flex', alignItems: 'center', padding: '0 10px', zIndex: 2,
-      }} className="ink-mono">
-        <span style={{ fontSize: 10, letterSpacing: '.15em', fontWeight: 600 }}>WIRE</span>
-      </div>
-      <div style={{
-        display: 'flex', whiteSpace: 'nowrap', paddingLeft: 64,
-        animation: `ink-scroll ${Math.max(18, headlines.length * 4)}s linear infinite`,
-      }} className="ink-ticker-track">
-        {doubled.map((h, i) => (
-          <span key={i} className="ink-mono" style={{ fontSize: 12, color: 'var(--ink-wire-bright)', padding: '9px 28px 9px 0' }}>
-            {h}<span style={{ marginLeft: 28, opacity: .5 }}>//</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ── Animated count-up (real numbers, no more hardcoded stats) ── */
-const useCountUp = (target, duration = 900) => {
-  const [value, setValue] = useState(0);
-  const fromRef = useRef(0);
-
-  useEffect(() => {
-    const from = fromRef.current;
-    const to = Number(target) || 0;
-    if (from === to) return;
-    let frame;
-    let start = null;
-    const step = (timestamp) => {
-      if (start === null) start = timestamp;
-      const progress = Math.min((timestamp - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      setValue(Math.round(from + (to - from) * eased));
-      if (progress < 1) frame = requestAnimationFrame(step);
-      else fromRef.current = to;
-    };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-
-  return value;
-};
-
-const formatCompact = (n) => {
-  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  return String(n);
-};
-
-/* ── Ledger stat strip — real numbers, animated ── */
-const Ledger = ({ storiesToday, deskCount, totalViews }) => {
-  const animatedStories = useCountUp(storiesToday);
-  const animatedDesks = useCountUp(deskCount);
-  const animatedViews = useCountUp(totalViews);
-
-  return (
-    <div className="ink-ledger">
-      <div className="ink-cell">
-        <span className="ink-num">{animatedStories}</span>
-        <span className="ink-label">Stories Today</span>
-      </div>
-      <div className="ink-cell">
-        <span className="ink-num">{animatedDesks}</span>
-        <span className="ink-label">Desks</span>
-      </div>
-      <div className="ink-cell">
-        <span className="ink-num">{formatCompact(animatedViews)}</span>
-        <span className="ink-label">Total Views</span>
-      </div>
-    </div>
-  );
-};
 
 const Home = () => {
-  const [searchParams] = useSearchParams();
-  const { slug: categorySlug } = useParams();
-
-  const category = useMemo(() => {
-    if (categorySlug) return slugToCategory(categorySlug);
-    return searchParams.get('category');
-  }, [categorySlug, searchParams]);
-
-  const searchQuery = searchParams.get('search');
-
+  const { isDark } = useTheme();
   const [posts, setPosts] = useState([]);
-  const [trendingPosts, setTrendingPosts] = useState([]);
-  const [breakingPosts, setBreakingPosts] = useState([]);
-  const [featuredPost, setFeaturedPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('latest');
-  const [ledgerStats, setLedgerStats] = useState({ storiesToday: 0, totalViews: 0 });
 
-  useEffect(() => { fetchTrendingPosts(); fetchBreakingNews(); fetchLedgerStats(); }, []);
-  useEffect(() => { fetchPosts(); }, [filter, category, searchQuery]);
-
-  const fetchBreakingNews = useCallback(async () => {
-    try {
-      const response = await postsAPI.getAll({ category: 'Breaking News', limit: 10 });
-      const data = response.data.data?.posts || response.data.posts || response.data || [];
-      setBreakingPosts(data);
-    } catch (error) {
-      console.error('Error fetching breaking news:', error);
-    }
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
-  // Site-wide (unfiltered) sample used only to compute the ledger numbers,
-  // independent of whatever category/search filter is currently applied
-  // to the main feed below.
-  const fetchLedgerStats = useCallback(async () => {
+  const fetchPosts = async () => {
     try {
-      const response = await postsAPI.getAll({ limit: 100 });
-      const allPosts = response.data.data?.posts || response.data.posts || response.data || [];
-      const todayStr = new Date().toDateString();
-      const storiesToday = allPosts.filter(p => new Date(p.createdAt).toDateString() === todayStr).length;
-      const totalViews = allPosts.reduce((sum, p) => sum + (p.views || 0), 0);
-      setLedgerStats({ storiesToday, totalViews });
-    } catch (error) {
-      console.error('Error fetching ledger stats:', error);
-    }
-  }, []);
-
-  const fetchPosts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = { limit: 20 };
-      if (filter === 'trending') params.trending = true;
-      else if (filter === 'popular') params.featured = true;
-      if (category) params.category = category;
-      if (searchQuery) params.search = searchQuery;
-
-      const response = await postsAPI.getAll(params);
-      const postsData = response.data.data?.posts || response.data.posts || response.data || [];
-      setPosts(postsData);
-      if (postsData.length > 0 && !searchQuery) setFeaturedPost(postsData[0]);
-      else setFeaturedPost(null);
+      const response = await postsAPI.getAll?.({ limit: 12 });
+      const data = response?.data?.data?.posts || response?.data?.posts || [];
+      setPosts(data);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      setPosts([]);
     } finally {
       setLoading(false);
     }
-  }, [filter, category, searchQuery]);
-
-  const fetchTrendingPosts = async () => {
-    try {
-      const response = await postsAPI.getTrending(5);
-      const trendingData = response.data.data?.posts || response.data.posts || response.data || [];
-      setTrendingPosts(trendingData);
-    } catch (error) {
-      console.error('Error fetching trending posts:', error);
-      setTrendingPosts([]);
-    }
   };
 
-  const displayPosts = useMemo(() => searchQuery ? posts : posts.slice(1), [posts, searchQuery]);
-  const sidebarCategories = ['Breaking News', 'Finance', 'Sports', 'Entertainment', 'Technology', 'World'];
-  const headlines = useMemo(() => breakingPosts.map(p => p.title).filter(Boolean), [breakingPosts]);
+  const CATEGORIES = [
+    { name: 'Breaking News', icon: '📰' },
+    { name: 'Finance', icon: '💵' },
+    { name: 'Stock Markets', icon: '📈' },
+    { name: 'Economy', icon: '💹' },
+    { name: 'Sports', icon: '🏆' },
+    { name: 'Movies', icon: '🎬' },
+    { name: 'Entertainment', icon: '⭐' },
+    { name: 'Technology', icon: '💻' },
+  ];
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{
+      background: isDark ? '#0F1117' : '#FFFFFF',
+      color: isDark ? '#E8E4DD' : '#071A33',
+      transition: 'all 0.3s ease',
+      minHeight: '100vh',
+    }}>
       <style>{`
-        .ink-filter-btn {
-          display:flex; align-items:center; gap:8px; padding:10px 16px; border:none;
-          background:transparent; cursor:pointer; font-weight:600; font-size:11px;
-          text-transform:uppercase; letter-spacing:.08em;
-          border-bottom:2px solid transparent; transition:.2s;
-          font-family:'IBM Plex Mono',monospace; white-space:nowrap;
+        .home-container {
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 40px 20px;
         }
-        @media(max-width:1024px){ .ink-two-col { grid-template-columns: 1fr !important; } }
-        .ink-posts-grid { display:flex; flex-direction:column; }
-        .ink-skeleton {
-          background: linear-gradient(90deg, var(--ink-paper-dim) 25%, var(--ink-rule) 50%, var(--ink-paper-dim) 75%);
-          background-size: 400px 100%;
-          animation: ink-shimmer 1.5s infinite;
+
+        .category-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 16px;
+          margin: 40px 0;
         }
-        @keyframes ink-shimmer { 0%{background-position:-400px 0;} 100%{background-position:400px 0;} }
+
+        .category-card {
+          background: ${isDark ? '#161B22' : '#FAF9F6'};
+          border: 1px solid ${isDark ? '#30363D' : '#E8E4DD'};
+          border-radius: 8px;
+          padding: 24px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none;
+          color: inherit;
+        }
+
+        .category-card:hover {
+          background: ${isDark ? '#21262D' : '#FFFFFF'};
+          border-color: #C4422F;
+          transform: translateY(-4px);
+          box-shadow: 0 4px 12px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(196, 66, 47, 0.1)'};
+        }
+
+        .category-icon {
+          font-size: 32px;
+          margin-bottom: 12px;
+        }
+
+        .category-name {
+          font-family: "Playfair Display", serif;
+          font-size: 16px;
+          font-weight: 700;
+          color: ${isDark ? '#E8E4DD' : '#071A33'};
+          margin: 0;
+        }
+
+        .category-link {
+          font-size: 12px;
+          color: #C4422F;
+          margin-top: 8px;
+          display: block;
+          text-decoration: none;
+          font-weight: 500;
+        }
+
+        .posts-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 24px;
+          margin-top: 40px;
+        }
+
+        .post-card {
+          background: ${isDark ? '#161B22' : '#FFFFFF'};
+          border: 1px solid ${isDark ? '#30363D' : '#E8E4DD'};
+          border-radius: 8px;
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+
+        .post-card:hover {
+          box-shadow: 0 8px 16px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'};
+          transform: translateY(-4px);
+        }
+
+        .post-image {
+          width: 100%;
+          height: 200px;
+          background: ${isDark ? '#0D1117' : '#F1F3F5'};
+          object-fit: cover;
+        }
+
+        .post-content {
+          padding: 20px;
+        }
+
+        .post-category {
+          display: inline-block;
+          background: rgba(196, 66, 47, 0.1);
+          color: #C4422F;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+
+        .post-title {
+          font-family: "Playfair Display", serif;
+          font-size: 18px;
+          font-weight: 700;
+          color: ${isDark ? '#E8E4DD' : '#071A33'};
+          margin: 0 0 8px;
+          line-height: 1.3;
+        }
+
+        .post-excerpt {
+          font-size: 14px;
+          color: ${isDark ? '#8B949E' : '#64748B'};
+          margin: 0 0 12px;
+          line-height: 1.5;
+        }
+
+        .post-meta {
+          font-size: 12px;
+          color: ${isDark ? '#8B949E' : '#64748B'};
+          font-family: "IBM Plex Mono", monospace;
+          display: flex;
+          gap: 16px;
+        }
+
+        .section-title {
+          font-family: "Playfair Display", serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: ${isDark ? '#E8E4DD' : '#071A33'};
+          margin: 40px 0 20px;
+          padding-bottom: 12px;
+          border-bottom: 2px solid #C4422F;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 40px;
+          color: ${isDark ? '#8B949E' : '#64748B'};
+        }
+
+        @media (max-width: 768px) {
+          .home-container {
+            padding: 20px;
+          }
+
+          .category-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .posts-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
 
-      <WireTicker headlines={headlines} />
-      <Ledger storiesToday={ledgerStats.storiesToday} deskCount={CATEGORIES.length} totalViews={ledgerStats.totalViews} />
-
-      {/* ── Category pills ── */}
-      <div className="ink-cats-row" style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '14px 18px', borderBottom: '1px solid var(--ink-rule)' }}>
-        <Link to="/" className={`ink-pill ${!category ? 'ink-active' : ''}`}>All Desks</Link>
-        {sidebarCategories.map(cat => (
-          <Link key={cat} to={categoryPath(cat)} className={`ink-pill ${category === cat ? 'ink-active' : ''}`}>
-            {cat}
-          </Link>
-        ))}
-      </div>
-
-      {/* ── Category banner (when filtering by category) ── */}
-      {category && (
-        <div style={{ padding: '28px 18px', borderBottom: '1px solid var(--ink-rule)', background: 'var(--ink-wire)' }}>
-          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-            <p className="ink-mono" style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-wire-bright)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Desk
-            </p>
-            <h2 className="ink-serif" style={{ fontSize: 'clamp(24px,4vw,38px)', fontWeight: 600, color: '#eeeadf', marginBottom: 10 }}>
-              {category}
-            </h2>
-            <Link to="/" style={{ fontSize: 12, color: 'rgba(238,234,223,.6)', textDecoration: 'none' }} className="ink-mono">
-              &larr; Back to all desks
-            </Link>
-          </div>
+      <div className="home-container">
+        <h1 className="section-title">Categories</h1>
+        <div className="category-grid">
+          {CATEGORIES.map((cat) => (
+            <a key={cat.name} href={`/?category=${encodeURIComponent(cat.name)}`} className="category-card">
+              <div className="category-icon">{cat.icon}</div>
+              <p className="category-name">{cat.name}</p>
+              <span className="category-link">View articles</span>
+            </a>
+          ))}
         </div>
-      )}
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 18px 60px', width: '100%', boxSizing: 'border-box' }}>
-
-        {searchQuery && (
-          <div style={{ margin: '20px 0', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span className="ink-mono" style={{ fontSize: 12, border: '1px solid var(--ink-rule)', borderRadius: 999, padding: '7px 16px', color: 'var(--ink-ink-soft)' }}>
-              Search: "{searchQuery}"
-            </span>
-            <Link to="/" className="ink-mono" style={{ fontSize: 12, color: 'var(--ink-stamp)', textDecoration: 'none' }}>
-              Clear filters
-            </Link>
-          </div>
-        )}
-
-        {/* ── Hero ── */}
-        {featuredPost && !searchQuery && (
-          <div style={{ margin: '20px 0' }}>
-            <NewsCard post={featuredPost} featured />
-          </div>
-        )}
-
-        <div className="ink-two-col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, marginTop: 24 }}>
-
-          {/* ── Main feed column ── */}
-          <div>
-            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--ink-rule)', marginBottom: 8, overflowX: 'auto' }}>
-              {[
-                { value: 'latest', label: 'Latest', icon: <Clock size={13} /> },
-                { value: 'popular', label: 'Popular', icon: <Flame size={13} /> },
-                { value: 'trending', label: 'Trending', icon: <TrendingUp size={13} /> },
-              ].map(({ value, label, icon }) => (
-                <button
-                  key={value}
-                  className="ink-filter-btn"
-                  onClick={() => setFilter(value)}
-                  style={{
-                    color: filter === value ? 'var(--ink-stamp)' : 'var(--ink-ink-soft)',
-                    borderBottomColor: filter === value ? 'var(--ink-stamp)' : 'transparent',
-                  }}
-                >
-                  {icon} {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="ink-mono" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: 10, color: 'var(--ink-ink-soft)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
-              <span>The Wire Desk</span>
-              <span>Updated just now</span>
-            </div>
-
-            {loading ? (
-              <div>
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 0', borderBottom: '1px solid var(--ink-rule)' }}>
-                    <div className="ink-skeleton" style={{ width: 88, height: 88, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="ink-skeleton" style={{ height: 16, width: '85%', marginBottom: 10 }} />
-                      <div className="ink-skeleton" style={{ height: 11, width: '45%' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : posts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <h3 className="ink-serif" style={{ fontSize: 22, fontWeight: 600, marginBottom: 10, color: 'var(--ink-ink)' }}>No stories found</h3>
-                <p style={{ fontSize: 14, color: 'var(--ink-ink-soft)', marginBottom: 20 }}>
-                  {category ? `No posts in "${category}" yet.` : searchQuery ? `No results for "${searchQuery}".` : 'No posts yet. Create your first post in the admin dashboard!'}
-                </p>
-                {(category || searchQuery) && (
-                  <Link to="/" className="ink-btn ink-btn-stamp">View all posts</Link>
+        <h2 className="section-title">Latest Stories</h2>
+        {loading ? (
+          <div className="loading">Loading stories...</div>
+        ) : posts.length === 0 ? (
+          <div className="loading">No stories found</div>
+        ) : (
+          <div className="posts-grid">
+            {posts.map((post) => (
+              <a
+                key={post._id}
+                href={`/article/${post.slug}`}
+                className="post-card"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                {post.featuredImage && (
+                  <img src={post.featuredImage} alt={post.title} className="post-image" />
                 )}
-              </div>
-            ) : (
-              <div className="ink-posts-grid">
-                {displayPosts.map((post) => (
-                  <NewsCard key={post._id} post={post} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ── Sidebar ── */}
-          <div>
-            <div className="ink-card" style={{ padding: '20px 18px', marginBottom: 20, position: 'sticky', top: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <h3 className="ink-serif" style={{ fontSize: 15, fontWeight: 600, margin: 0, color: 'var(--ink-ink)' }}>Trending Now</h3>
-              </div>
-              {trendingPosts.length > 0 ? (
-                <div>
-                  {trendingPosts.map((post, i) => (
-                    <TrendingPost key={post._id} post={post} rank={i + 1} />
-                  ))}
+                <div className="post-content">
+                  <span className="post-category">{post.category}</span>
+                  <h3 className="post-title">{post.title}</h3>
+                  <p className="post-excerpt">{post.excerpt || post.content?.slice(0, 100)}</p>
+                  <div className="post-meta">
+                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    <span>{post.views || 0} views</span>
+                  </div>
                 </div>
-              ) : (
-                <p style={{ fontSize: 13, color: 'var(--ink-ink-soft)' }}>No trending posts yet.</p>
-              )}
-            </div>
+              </a>
+            ))}
           </div>
-        </div>
-      </div>
-
-      <div style={{ textAlign: 'center', padding: '22px 18px 34px' }} className="ink-mono ink-rule-top">
-        <span style={{ fontSize: 10, color: 'var(--ink-ink-soft)', letterSpacing: '.08em' }}>SYDLINES MEDIA &mdash; REPORTED, NOT REPEATED</span>
+        )}
       </div>
     </div>
   );

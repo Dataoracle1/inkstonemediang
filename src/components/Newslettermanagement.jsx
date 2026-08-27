@@ -1,285 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { Send, Users, Mail, CheckCircle, XCircle, Search, Plus } from 'lucide-react';
-import { newsletterAPI } from '../utils/api';
-import { useToast } from '../context/ToastContext';
+import { Mail, Trash2, Send } from 'lucide-react';
 
-const inputStyle = {
-  width: '100%', padding: '9px 12px', border: '1px solid var(--ink-rule)', borderRadius: 2,
-  fontSize: 13, outline: 'none', background: 'var(--ink-paper-dim)', color: 'var(--ink-ink)',
-  fontFamily: "'Source Sans 3', sans-serif", boxSizing: 'border-box',
-};
-const labelStyle = { display: 'block', fontSize: 10, fontWeight: 600, color: 'var(--ink-ink-soft)', marginBottom: 8, fontFamily: "'IBM Plex Mono', monospace", textTransform: 'uppercase', letterSpacing: '.06em' };
+const Newslettermanagement = () => {
+  const [subscribers, setSubscribers] = useState([
+    { _id: '1', email: 'subscriber1@example.com', subscribed: true, date: '2024-08-20' },
+    { _id: '2', email: 'subscriber2@example.com', subscribed: true, date: '2024-08-19' },
+  ]);
 
-const Badge = ({ children, tone = 'neutral' }) => {
-  const tones = { neutral: 'var(--ink-ink-soft)', positive: 'var(--ink-wire-bright)', warn: '#b45309', danger: 'var(--ink-stamp)' };
-  const color = tones[tone] || tones.neutral;
-  return (
-    <span className="ink-mono" style={{ padding: '3px 9px', border: `1px solid ${color}`, color, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
-      {children}
-    </span>
-  );
-};
-
-const NewsletterManagement = () => {
-  const [activeTab, setActiveTab] = useState('subscribers');
-  const [subscribers, setSubscribers] = useState([]);
-  const [campaigns, setCampaigns] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const { showToast } = useToast();
-
-  const [selectedPosts, setSelectedPosts] = useState([]);
-  const [availablePosts, setAvailablePosts] = useState([]);
-  const [newsletterForm, setNewsletterForm] = useState({ subject: '', preheader: '', targetFrequency: 'all' });
-
-  useEffect(() => {
-    if (activeTab === 'subscribers') fetchSubscribers();
-    else if (activeTab === 'campaigns') fetchCampaigns();
-  }, [activeTab]);
-
-  useEffect(() => { if (showCreateForm) fetchAvailablePosts(); }, [showCreateForm]);
-
-  const fetchSubscribers = async () => {
-    try {
-      setLoading(true);
-      const response = await newsletterAPI.getSubscribers();
-      setSubscribers(response.data.data.subscribers);
-      setStats(response.data.data.stats);
-    } catch (error) {
-      console.error('Error fetching subscribers:', error);
-      showToast('Failed to fetch subscribers', 'error');
-    } finally { setLoading(false); }
+  const handleUnsubscribe = (id) => {
+    setSubscribers(subscribers.filter(s => s._id !== id));
   };
 
-  const fetchCampaigns = async () => {
-    try {
-      setLoading(true);
-      const response = await newsletterAPI.getCampaigns();
-      setCampaigns(response.data.data.newsletters);
-    } catch (error) {
-      console.error('Error fetching campaigns:', error);
-      showToast('Failed to fetch campaigns', 'error');
-    } finally { setLoading(false); }
-  };
-
-  const fetchAvailablePosts = async () => {
-    try {
-      const response = await fetch('/api/posts?limit=20&status=published');
-      const data = await response.json();
-      setAvailablePosts(data.data.posts);
-    } catch (error) { console.error('Error fetching posts:', error); }
-  };
-
-  const handleSendNewsletter = async (e) => {
-    e.preventDefault();
-    if (selectedPosts.length === 0) { showToast('Please select at least one post', 'error'); return; }
-    try {
-      const response = await newsletterAPI.sendNewsletter({
-        subject: newsletterForm.subject,
-        preheader: newsletterForm.preheader,
-        postIds: selectedPosts,
-        targetAudience: { frequency: newsletterForm.targetFrequency },
-      });
-      showToast(response.data.message || 'Newsletter sent successfully!', 'success');
-      setShowCreateForm(false);
-      setNewsletterForm({ subject: '', preheader: '', targetFrequency: 'all' });
-      setSelectedPosts([]);
-      setActiveTab('campaigns');
-    } catch (error) {
-      console.error('Error sending newsletter:', error);
-      showToast(error.response?.data?.message || 'Failed to send newsletter', 'error');
-    }
-  };
-
-  const togglePostSelection = (postId) => setSelectedPosts(prev => prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]);
-
-  const filteredSubscribers = subscribers.filter(sub =>
-    sub.email.toLowerCase().includes(searchQuery.toLowerCase()) || sub.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const TabButton = ({ id, label }) => (
-    <button onClick={() => setActiveTab(id)} className="ink-mono"
-      style={{
-        padding: '9px 16px', border: '1px solid var(--ink-rule)', cursor: 'pointer', fontSize: 11,
-        fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em',
-        background: activeTab === id ? 'var(--ink-ink)' : 'transparent',
-        color: activeTab === id ? 'var(--ink-paper)' : 'var(--ink-ink-soft)',
-      }}>
-      {label}
-    </button>
-  );
+  const totalSubscribers = subscribers.filter(s => s.subscribed).length;
 
   return (
     <div>
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 24 }}>
-          {[
-            { label: 'Total Subscribers', value: stats.total, icon: Users },
-            { label: 'Active', value: stats.active, icon: CheckCircle },
-            { label: 'Pending', value: stats.pending, icon: Mail },
-            { label: 'Unsubscribed', value: stats.unsubscribed, icon: XCircle },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="ink-card" style={{ padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p className="ink-mono" style={{ fontSize: 10, color: 'var(--ink-ink-soft)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</p>
-                <p className="ink-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--ink-ink)', margin: 0 }}>{value}</p>
-              </div>
-              <Icon size={20} color="var(--ink-stamp)" />
-            </div>
-          ))}
-        </div>
-      )}
+      <style>{`
+        .newsletter-header { font-family: "Playfair Display", serif; font-size: 24px; font-weight: 700; color: #071A33; margin: 0 0 32px; }
+        .newsletter-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
+        .stat-box { background: white; border: 1px solid #e8e4dd; border-radius: 8px; padding: 20px; }
+        .stat-label { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #64748B; letter-spacing: .08em; }
+        .stat-number { font-family: "Playfair Display", serif; font-size: 32px; font-weight: 700; color: #071A33; margin: 8px 0 0; }
+        .newsletter-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e8e4dd; border-radius: 8px; overflow: hidden; }
+        .newsletter-table th { background: #F1F3F5; padding: 14px; text-align: left; font-weight: 600; font-size: 12px; font-family: "IBM Plex Mono", monospace; color: #64748B; }
+        .newsletter-table td { padding: 14px; border-bottom: 1px solid #e8e4dd; }
+        .sub-email { font-weight: 600; color: #071A33; }
+        .sub-status { background: rgba(34,197,94,.1); color: #22c55e; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; width: fit-content; }
+        .sub-actions { display: flex; gap: 8px; }
+        .sub-btn { width: 32px; height: 32px; border: 1px solid #e8e4dd; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .sub-btn:hover { background: #C4422F; color: white; border-color: #C4422F; }
+      `}</style>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <TabButton id="subscribers" label="Subscribers" />
-          <TabButton id="campaigns" label="Campaigns" />
+      <h1 className="newsletter-header">Newsletter Management</h1>
+
+      <div className="newsletter-stats">
+        <div className="stat-box">
+          <div className="stat-label">Total Subscribers</div>
+          <div className="stat-number">{totalSubscribers}</div>
         </div>
-        {activeTab === 'campaigns' && (
-          <button onClick={() => setShowCreateForm(!showCreateForm)} className="ink-btn ink-btn-stamp">
-            <Plus size={15} /> Create Newsletter
-          </button>
-        )}
+        <div className="stat-box">
+          <div className="stat-label">Subscribed This Month</div>
+          <div className="stat-number">12</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Unsubscribed This Month</div>
+          <div className="stat-number">2</div>
+        </div>
       </div>
 
-      {showCreateForm && activeTab === 'campaigns' && (
-        <div className="ink-card" style={{ padding: 22, marginBottom: 20 }}>
-          <h3 className="ink-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 18, color: 'var(--ink-ink)' }}>Create Newsletter</h3>
-          <form onSubmit={handleSendNewsletter} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Subject Line *</label>
-              <input type="text" value={newsletterForm.subject} onChange={e => setNewsletterForm({ ...newsletterForm, subject: e.target.value })}
-                style={inputStyle} placeholder="Your weekly digest from SYDLINES MEDIA" required />
-            </div>
-            <div>
-              <label style={labelStyle}>Preheader Text (Preview)</label>
-              <input type="text" value={newsletterForm.preheader} onChange={e => setNewsletterForm({ ...newsletterForm, preheader: e.target.value })}
-                style={inputStyle} placeholder="Breaking news, sports, and entertainment updates..." />
-            </div>
-            <div>
-              <label style={labelStyle}>Target Audience</label>
-              <select value={newsletterForm.targetFrequency} onChange={e => setNewsletterForm({ ...newsletterForm, targetFrequency: e.target.value })} style={inputStyle}>
-                <option value="all">All Subscribers</option>
-                <option value="daily">Daily Digest Subscribers</option>
-                <option value="weekly">Weekly Digest Subscribers</option>
-                <option value="monthly">Monthly Digest Subscribers</option>
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Select Posts ({selectedPosts.length} selected)</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, maxHeight: 340, overflowY: 'auto', border: '1px solid var(--ink-rule)', padding: 10 }}>
-                {availablePosts.map(post => {
-                  const selected = selectedPosts.includes(post._id);
-                  return (
-                    <div key={post._id} onClick={() => togglePostSelection(post._id)}
-                      style={{ padding: 10, border: `1.5px solid ${selected ? 'var(--ink-stamp)' : 'var(--ink-rule)'}`, background: selected ? 'var(--ink-stamp-dim)' : 'transparent', cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <img src={post.image} alt={post.title} style={{ width: 56, height: 56, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--ink-rule)' }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{post.title}</p>
-                        <p className="ink-mono" style={{ fontSize: 10, color: 'var(--ink-ink-soft)', marginTop: 4 }}>{post.category}</p>
-                      </div>
-                      {selected && <CheckCircle size={18} color="var(--ink-stamp)" style={{ flexShrink: 0 }} />}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button type="submit" className="ink-btn ink-btn-stamp">
-                <Send size={15} /> Send Newsletter
-              </button>
-              <button type="button" onClick={() => setShowCreateForm(false)} className="ink-btn">Cancel</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {activeTab === 'subscribers' && (
-        <div className="ink-card" style={{ padding: 22 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-            <h3 className="ink-serif" style={{ fontSize: 19, fontWeight: 600, color: 'var(--ink-ink)', margin: 0 }}>Subscribers List</h3>
-            <div style={{ position: 'relative', width: 240 }}>
-              <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-ink-soft)' }} />
-              <input type="text" placeholder="Search subscribers..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ ...inputStyle, paddingLeft: 34 }} />
-            </div>
-          </div>
-
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px 0' }}>
-              <div style={{ width: 40, height: 40, border: '3px solid var(--ink-rule)', borderTopColor: 'var(--ink-stamp)', borderRadius: '50%', animation: 'ink-spin .8s linear infinite', margin: '0 auto' }} />
-              <style>{`@keyframes ink-spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid var(--ink-rule)' }}>
-                    {['Email', 'Name', 'Status', 'Subscribed', 'Emails Sent', 'Open Rate'].map((h, i) => (
-                      <th key={h} className="ink-mono" style={{ textAlign: i < 2 ? 'left' : 'center', padding: '10px 14px', fontSize: 10, fontWeight: 600, color: 'var(--ink-ink-soft)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSubscribers.map(sub => (
-                    <tr key={sub._id} style={{ borderBottom: '1px solid var(--ink-rule)' }}>
-                      <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--ink-ink)' }}>{sub.email}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--ink-ink-soft)' }}>{sub.name || '-'}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                        <Badge tone={sub.status === 'active' ? 'positive' : sub.status === 'pending' ? 'warn' : 'danger'}>{sub.status}</Badge>
-                      </td>
-                      <td className="ink-mono" style={{ padding: '10px 14px', textAlign: 'center', fontSize: 11, color: 'var(--ink-ink-soft)' }}>{new Date(sub.subscribedAt).toLocaleDateString()}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, color: 'var(--ink-ink-soft)' }}>{sub.emailsSent}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, color: 'var(--ink-ink-soft)' }}>{sub.openRate}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'campaigns' && !showCreateForm && (
-        <div className="ink-card" style={{ padding: 22 }}>
-          <h3 className="ink-serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 20, color: 'var(--ink-ink)' }}>Newsletter Campaigns</h3>
-
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px 0' }}>
-              <div style={{ width: 40, height: 40, border: '3px solid var(--ink-rule)', borderTopColor: 'var(--ink-stamp)', borderRadius: '50%', animation: 'ink-spin .8s linear infinite', margin: '0 auto' }} />
-            </div>
-          ) : campaigns.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px 24px' }}>
-              <Mail size={40} style={{ color: 'var(--ink-ink-soft)', margin: '0 auto 14px' }} />
-              <p style={{ color: 'var(--ink-ink-soft)', fontSize: 14 }}>No newsletters sent yet</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {campaigns.map(campaign => (
-                <div key={campaign._id} style={{ border: '1px solid var(--ink-rule)', padding: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <h4 style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink-ink)', margin: 0 }}>{campaign.subject}</h4>
-                      <p className="ink-mono" style={{ fontSize: 11, color: 'var(--ink-ink-soft)', marginTop: 6 }}>
-                        Sent {new Date(campaign.sentAt || campaign.createdAt).toLocaleDateString()} &middot; {campaign.stats.totalSent} recipients
-                      </p>
-                      <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 12, color: 'var(--ink-ink-soft)', flexWrap: 'wrap' }}>
-                        <span>{campaign.stats.delivered} delivered</span>
-                        <span>{campaign.stats.opened} opened ({campaign.openRate}%)</span>
-                        <span>{campaign.stats.clicked} clicked ({campaign.clickRate}%)</span>
-                      </div>
-                    </div>
-                    <Badge tone={campaign.status === 'sent' ? 'positive' : campaign.status === 'sending' ? 'warn' : 'neutral'}>{campaign.status}</Badge>
-                  </div>
+      <table className="newsletter-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Subscribed Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {subscribers.map((sub) => (
+            <tr key={sub._id}>
+              <td className="sub-email">{sub.email}</td>
+              <td>
+                <span className="sub-status">
+                  <Mail size={11} style={{ display: 'inline' }} /> Active
+                </span>
+              </td>
+              <td style={{ fontSize: 12, color: '#64748B' }}>{sub.date}</td>
+              <td>
+                <div className="sub-actions">
+                  <button className="sub-btn"><Send size={14} /></button>
+                  <button className="sub-btn" onClick={() => handleUnsubscribe(sub._id)}>
+                    <Trash2 size={14} />
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default NewsletterManagement;
+export default Newslettermanagement;

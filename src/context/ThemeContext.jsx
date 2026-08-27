@@ -1,34 +1,37 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const ThemeContext = createContext(null);
-
-export const useInkTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useInkTheme must be used within ThemeProvider');
-  }
-  return context;
-};
+const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(
-    () => localStorage.getItem('ink-theme') === 'dark'
-  );
+  const [isDark, setIsDark] = useState(() => {
+    // Check localStorage first
+    const saved = localStorage.getItem('sydlines-theme');
+    if (saved) return saved === 'dark';
+    
+    // Check system preference
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
+  });
 
   useEffect(() => {
-    const root = document.documentElement;
+    // Update DOM
+    const html = document.documentElement;
     if (isDark) {
-      root.classList.add('dark');
+      html.setAttribute('data-theme', 'dark');
+      html.classList.add('dark-mode');
+      html.classList.remove('light-mode');
     } else {
-      root.classList.remove('dark');
+      html.setAttribute('data-theme', 'light');
+      html.classList.add('light-mode');
+      html.classList.remove('dark-mode');
     }
-    root.setAttribute('data-ink-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem('ink-theme', isDark ? 'dark' : 'light');
+    
+    // Persist to localStorage
+    localStorage.setItem('sydlines-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     setIsDark(prev => !prev);
-  }, []);
+  };
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
@@ -37,18 +40,42 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-/* Small reusable toggle button matching the mockup exactly:
-   ☾ Dark / ☀ Light pill, top-right of the masthead strip. */
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within ThemeProvider');
+  }
+  return context;
+};
+
+// Theme toggle button component
 export const ThemeToggleButton = () => {
-  const { isDark, toggleTheme } = useInkTheme();
+  const { isDark, toggleTheme } = useTheme();
+
   return (
     <button
-      className="ink-theme-toggle"
       onClick={toggleTheme}
-      aria-label="Toggle light and dark mode"
+      className="theme-toggle-btn"
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{
+        width: '36px',
+        height: '36px',
+        borderRadius: '6px',
+        border: '1px solid var(--theme-border)',
+        background: 'var(--theme-bg-secondary)',
+        color: 'var(--theme-text)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px',
+        transition: 'all 0.2s ease',
+      }}
     >
-      <span>{isDark ? '☀' : '☾'}</span>
-      <span>{isDark ? 'Light' : 'Dark'}</span>
+      {isDark ? '☀️' : '🌙'}
     </button>
   );
 };
+
+export default ThemeContext;
