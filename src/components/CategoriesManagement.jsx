@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { categoriesAPI } from '../utils/api';
+import { useTheme } from '../context/ThemeContext';
+import api from '../api/api';
 
 const CategoriesManagement = () => {
+  const { isDark } = useTheme();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newCat, setNewCat] = useState('');
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ name: '', description: '', status: 'active' });
 
   useEffect(() => {
     fetchCategories();
@@ -13,84 +15,150 @@ const CategoriesManagement = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await categoriesAPI.getAll?.() || { data: { data: [] } };
-      setCategories(response.data.data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    } finally {
-      setLoading(false);
+      const response = await api.get('/categories');
+      setCategories(response.data.data.categories);
+    } catch (err) {
+      setError('Failed to load categories');
     }
+    setLoading(false);
   };
 
-  const handleAdd = async () => {
-    if (!newCat.trim()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await categoriesAPI.create?.({ name: newCat });
-      setNewCat('');
-      fetchCategories();
-    } catch (error) {
-      console.error('Error adding category:', error);
+      setError('');
+      const response = await api.post('/categories', formData);
+      setCategories([...categories, response.data.data.category]);
+      setFormData({ name: '', description: '', status: 'active' });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create category');
     }
   };
 
-  const handleDelete = async (id) => {
+  const deleteCategory = async (id) => {
     if (!window.confirm('Delete this category?')) return;
     try {
-      await categoriesAPI.delete?.(id);
-      fetchCategories();
-    } catch (error) {
-      console.error('Error deleting category:', error);
+      await api.delete(`/categories/${id}`);
+      setCategories(categories.filter(c => c._id !== id));
+    } catch (err) {
+      setError('Failed to delete category');
     }
   };
 
   return (
-    <div>
-      <style>{`
-        .cat-header { font-family: "Playfair Display", serif; font-size: 24px; font-weight: 700; color: #071A33; margin: 0 0 32px; }
-        .cat-input-group { display: flex; gap: 12px; margin-bottom: 32px; }
-        .cat-input { flex: 1; padding: 10px 14px; border: 1px solid #e8e4dd; border-radius: 4px; font-size: 14px; font-family: inherit; }
-        .cat-btn { padding: 10px 20px; background: #C4422F; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .cat-btn:hover { opacity: 0.9; }
-        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-        .cat-card { background: white; border: 1px solid #e8e4dd; border-radius: 8px; padding: 20px; display: flex; align-items: center; justify-content: space-between; }
-        .cat-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-        .cat-name { font-weight: 600; color: #071A33; }
-        .cat-actions { display: flex; gap: 8px; }
-        .cat-action-btn { width: 32px; height: 32px; border: 1px solid #e8e4dd; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #071A33; }
-        .cat-action-btn:hover { background: #C4422F; color: white; border-color: #C4422F; }
-      `}</style>
+    <div style={{ padding: '20px', backgroundColor: isDark ? '#0f1419' : '#ffffff', transition: 'all 0.3s ease' }}>
+      <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '20px', color: isDark ? '#fff' : '#000' }}>
+        Categories Management
+      </h2>
 
-      <h1 className="cat-header">Categories Management</h1>
+      {error && (
+        <div style={{ backgroundColor: '#fee', color: '#c33', padding: '12px', borderRadius: '6px', marginBottom: '20px' }}>
+          ❌ {error}
+        </div>
+      )}
 
-      <div className="cat-input-group">
-        <input
-          type="text"
-          value={newCat}
-          onChange={(e) => setNewCat(e.target.value)}
-          placeholder="New category name..."
-          className="cat-input"
-          onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
-        />
-        <button onClick={handleAdd} className="cat-btn">
-          <Plus size={16} /> Add
-        </button>
+      {/* Add Category Form */}
+      <div style={{ backgroundColor: isDark ? '#1a1f2e' : '#f9f9f9', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px', color: isDark ? '#fff' : '#000' }}>
+          Add New Category
+        </h3>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '12px' }}>
+          <input
+            type="text"
+            placeholder="Category name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            style={{
+              padding: '10px 12px',
+              border: isDark ? '1px solid #444' : '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: isDark ? '#2a2f3e' : '#fff',
+              color: isDark ? '#fff' : '#000',
+            }}
+          />
+          <textarea
+            placeholder="Description (optional)"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows="3"
+            style={{
+              padding: '10px 12px',
+              border: isDark ? '1px solid #444' : '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: isDark ? '#2a2f3e' : '#fff',
+              color: isDark ? '#fff' : '#000',
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: '10px 16px',
+              backgroundColor: '#d32f2f',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            Create Category
+          </button>
+        </form>
       </div>
 
+      {/* Categories List */}
       {loading ? (
-        <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>Loading...</div>
+        <div style={{ textAlign: 'center', color: isDark ? '#999' : '#666' }}>Loading...</div>
       ) : (
-        <div className="cat-grid">
-          {categories.length > 0 ? categories.map((cat) => (
-            <div key={cat._id} className="cat-card">
-              <span className="cat-name">{cat.name || cat}</span>
-              <div className="cat-actions">
-                <button className="cat-action-btn"><Edit2 size={14} /></button>
-                <button className="cat-action-btn" onClick={() => handleDelete(cat._id)}>
-                  <Trash2 size={14} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
+          {categories.map((cat) => (
+            <div
+              key={cat._id}
+              style={{
+                backgroundColor: isDark ? '#1a1f2e' : '#f9f9f9',
+                padding: '16px',
+                borderRadius: '8px',
+                border: isDark ? '1px solid #333' : '1px solid #ddd',
+              }}
+            >
+              <h4 style={{ fontSize: '16px', fontWeight: 700, color: isDark ? '#fff' : '#000', margin: '0 0 8px 0' }}>
+                {cat.name}
+              </h4>
+              <p style={{ fontSize: '13px', color: isDark ? '#999' : '#666', margin: '0 0 12px 0' }}>
+                {cat.description || 'No description'}
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span
+                  style={{
+                    backgroundColor: cat.status === 'active' ? '#4caf50' : '#f44336',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '3px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {cat.status}
+                </span>
+                <button
+                  onClick={() => deleteCategory(cat._id)}
+                  style={{
+                    marginLeft: 'auto',
+                    padding: '4px 12px',
+                    backgroundColor: '#d32f2f',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                  }}
+                >
+                  Delete
                 </button>
               </div>
             </div>
-          )) : <div style={{ padding: 40, color: '#64748B' }}>No categories</div>}
+          ))}
         </div>
       )}
     </div>

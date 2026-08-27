@@ -1,336 +1,219 @@
 import React, { useState } from 'react';
-import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from "../../context/ThemeContext";
-import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const AdminLogin = () => {
-  const { isDark } = useTheme();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
+  const { isDark } = useTheme();
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Store token
-        localStorage.setItem('authToken', data.data.token);
-        localStorage.setItem('adminUser', JSON.stringify(data.data.admin));
-        
-        toast.success('Login successful!');
-        navigate('/admin/dashboard');
-      } else {
-        setError(data.message || 'Login failed');
-        toast.error(data.message || 'Login failed');
-      }
-    } catch (err) {
-      setError('Connection error. Check your backend is running.');
-      toast.error('Connection error');
-    } finally {
+    if (!formData.email || !formData.password) {
+      setError('Email and password are required');
       setLoading(false);
+      return;
     }
+
+    const result = await login(formData.email, formData.password);
+
+    if (result.success) {
+      navigate('/admin/dashboard');
+    } else {
+      setError(result.message || 'Login failed');
+    }
+    setLoading(false);
   };
 
   return (
-    <div style={{
-      background: isDark ? '#0F1117' : '#FFFFFF',
-      minHeight: 'calc(100vh - 200px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      transition: 'all 0.3s ease',
-    }}>
-      <style>{`
-        .login-container {
-          width: 100%;
-          max-width: 420px;
-          background: ${isDark ? '#161B22' : '#FAF9F6'};
-          border: 1px solid ${isDark ? '#30363D' : '#E8E4DD'};
-          border-radius: 8px;
-          padding: 40px;
-          box-shadow: 0 4px 12px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)'};
-        }
-
-        .login-logo {
-          text-align: center;
-          margin-bottom: 32px;
-        }
-
-        .logo-text {
-          font-family: "Playfair Display", serif;
-          font-size: 28px;
-          font-weight: 700;
-          color: ${isDark ? '#E8E4DD' : '#071A33'};
-          margin: 0;
-        }
-
-        .logo-text .syd {
-          color: ${isDark ? '#E8E4DD' : '#071A33'};
-        }
-
-        .logo-text .lines {
-          color: #C4422F;
-          font-style: italic;
-        }
-
-        .login-title {
-          font-size: 20px;
-          font-weight: 600;
-          color: ${isDark ? '#E8E4DD' : '#071A33'};
-          margin: 24px 0 8px;
-          text-align: center;
-        }
-
-        .login-subtitle {
-          font-size: 13px;
-          color: ${isDark ? '#8B949E' : '#64748B'};
-          text-align: center;
-          margin: 0 0 24px;
-        }
-
-        .form-group {
-          margin-bottom: 20px;
-        }
-
-        .form-label {
-          display: block;
-          font-size: 11px;
-          font-weight: 600;
-          color: ${isDark ? '#8B949E' : '#64748B'};
-          font-family: "IBM Plex Mono", monospace;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          margin-bottom: 8px;
-        }
-
-        .form-input-wrapper {
-          position: relative;
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 12px 14px;
-          padding-right: 40px;
-          background: ${isDark ? '#0D1117' : '#FFFFFF'};
-          border: 1px solid ${isDark ? '#30363D' : '#E8E4DD'};
-          border-radius: 4px;
-          font-size: 14px;
-          color: ${isDark ? '#E8E4DD' : '#071A33'};
-          font-family: inherit;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-        }
-
-        .form-input::placeholder {
-          color: ${isDark ? '#8B949E' : '#64748B'};
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: #C4422F;
-          background: ${isDark ? '#161B22' : '#FAF9F6'};
-          box-shadow: 0 0 0 3px rgba(196, 66, 47, 0.1);
-        }
-
-        .toggle-password {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: ${isDark ? '#8B949E' : '#64748B'};
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          padding: 4px;
-          transition: color 0.2s ease;
-        }
-
-        .toggle-password:hover {
-          color: #C4422F;
-        }
-
-        .error-box {
-          background: rgba(255, 107, 107, 0.1);
-          border: 1px solid rgba(255, 107, 107, 0.3);
-          border-radius: 4px;
-          padding: 12px;
-          margin-bottom: 20px;
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          color: #FF6B6B;
-        }
-
-        .error-icon {
-          flex-shrink: 0;
-          margin-top: 2px;
-        }
-
-        .error-text {
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .forgot-link {
-          text-align: right;
-          margin-bottom: 20px;
-        }
-
-        .forgot-link a {
-          font-size: 12px;
-          color: #C4422F;
-          text-decoration: none;
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-
-        .forgot-link a:hover {
-          text-decoration: underline;
-        }
-
-        .submit-btn {
-          width: 100%;
-          padding: 12px;
-          background: #C4422F;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          margin-bottom: 16px;
-        }
-
-        .submit-btn:hover:not(:disabled) {
-          background: #B23620;
-          transform: translateY(-2px);
-        }
-
-        .submit-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .signup-section {
-          text-align: center;
-          padding-top: 20px;
-          border-top: 1px solid ${isDark ? '#30363D' : '#E8E4DD'};
-          font-size: 13px;
-          color: ${isDark ? '#8B949E' : '#64748B'};
-        }
-
-        .signup-link {
-          color: #C4422F;
-          text-decoration: none;
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-
-        .signup-link:hover {
-          text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-          .login-container {
-            padding: 30px 20px;
-          }
-
-          .login-title {
-            font-size: 18px;
-          }
-        }
-      `}</style>
-
-      <div className="login-container">
-        <div className="login-logo">
-          <p className="logo-text">
-            <span className="syd">SYD</span>
-            <span className="lines"> LINES.</span>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: isDark ? '#0f1419' : '#ffffff',
+        transition: 'background-color 0.3s ease',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '400px',
+          padding: '40px',
+          backgroundColor: isDark ? '#1a1f2e' : '#f9f9f9',
+          borderRadius: '8px',
+          boxShadow: isDark ? '0 0 20px rgba(0,0,0,0.3)' : '0 0 20px rgba(0,0,0,0.1)',
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1
+            style={{
+              fontSize: '28px',
+              fontWeight: 700,
+              color: isDark ? '#fff' : '#000',
+              margin: '0 0 8px 0',
+            }}
+          >
+            SYDLINES
+            <span style={{ color: '#d32f2f' }}>.</span>
+          </h1>
+          <p
+            style={{
+              fontSize: '11px',
+              letterSpacing: '2px',
+              fontWeight: 600,
+              color: isDark ? '#999' : '#666',
+              margin: '0 0 12px 0',
+            }}
+          >
+            SMART NEWS. REAL IMPACT.
           </p>
+          <h2
+            style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: isDark ? '#fff' : '#000',
+              margin: '0',
+            }}
+          >
+            Admin Login
+          </h2>
         </div>
 
-        <h1 className="login-title">Admin Login</h1>
-        <p className="login-subtitle">Enter your credentials to access the dashboard</p>
+        {error && (
+          <div
+            style={{
+              backgroundColor: '#fee',
+              border: '1px solid #fcc',
+              color: '#c33',
+              padding: '12px',
+              borderRadius: '4px',
+              marginBottom: '20px',
+              fontSize: '13px',
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit}>
-          {error && (
-            <div className="error-box">
-              <div className="error-icon">
-                <AlertCircle size={18} />
-              </div>
-              <div className="error-text">{error}</div>
-            </div>
-          )}
-
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: isDark ? '#fff' : '#000',
+                marginBottom: '6px',
+              }}
+            >
+              Email Address
+            </label>
             <input
               type="email"
-              className="form-input"
-              placeholder="admin@sydlines.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="your@email.com"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: isDark ? '1px solid #444' : '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: isDark ? '#2a2f3e' : '#fff',
+                color: isDark ? '#fff' : '#000',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <div className="form-input-wrapper">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="form-input"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="forgot-link">
-            <Link to="/admin/forgot-password">Forgot password?</Link>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: isDark ? '#fff' : '#000',
+                marginBottom: '6px',
+              }}
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Your password"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: isDark ? '1px solid #444' : '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: isDark ? '#2a2f3e' : '#fff',
+                color: isDark ? '#fff' : '#000',
+                boxSizing: 'border-box',
+              }}
+            />
           </div>
 
           <button
             type="submit"
-            className="submit-btn"
             disabled={loading}
+            style={{
+              padding: '12px',
+              backgroundColor: '#d32f2f',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
+              marginTop: '8px',
+              transition: 'opacity 0.2s',
+            }}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        <div className="signup-section">
-          New admin?{' '}
-          <Link to="/admin/signup" className="signup-link">
-            Create account
+        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: isDark ? '1px solid #333' : '1px solid #ddd' }}>
+          <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: isDark ? '#999' : '#666' }}>
+            Don't have an account?{' '}
+            <Link
+              to="/admin/signup"
+              style={{ color: '#d32f2f', textDecoration: 'none', fontWeight: 600 }}
+            >
+              Create one
+            </Link>
+          </p>
+          <Link
+            to="/admin/forgot-password"
+            style={{
+              fontSize: '13px',
+              color: '#d32f2f',
+              textDecoration: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Forgot your password?
           </Link>
         </div>
       </div>

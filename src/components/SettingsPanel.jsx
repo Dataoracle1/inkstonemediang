@@ -1,99 +1,83 @@
-import React, { useState } from 'react';
-import { Save, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import api from '../api/api';
 
 const SettingsPanel = () => {
-  const [settings, setSettings] = useState({
-    siteName: 'SYDLINES MEDIA',
-    tagline: 'Smart News. Real Impact.',
-    email: 'hello@sydlines.com',
-    timezone: 'UTC+1',
-    language: 'English',
-  });
-  const [saved, setSaved] = useState(false);
+  const { isDark } = useTheme();
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [formData, setFormData] = useState({});
 
-  const handleChange = (key, value) => {
-    setSettings({ ...settings, [key]: value });
-    setSaved(false);
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await api.get('/settings');
+      setSettings(response.data.data.settings);
+      setFormData(response.data.data.settings);
+    } catch (err) {
+      setError('Failed to load settings');
+    }
+    setLoading(false);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setError('');
+      setSuccess('');
+      await api.put('/settings', formData);
+      setSuccess('Settings updated successfully!');
+    } catch (err) {
+      setError('Failed to update settings');
+    }
+  };
+
+  if (loading) {
+    return <div style={{ color: isDark ? '#fff' : '#000' }}>Loading settings...</div>;
+  }
 
   return (
-    <div>
-      <style>{`
-        .settings-header { font-family: "Playfair Display", serif; font-size: 24px; font-weight: 700; color: #071A33; margin: 0 0 32px; }
-        .settings-form { background: white; border: 1px solid #e8e4dd; border-radius: 8px; padding: 32px; max-width: 600px; }
-        .form-group { margin-bottom: 24px; }
-        .form-group label { display: block; font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #64748B; margin-bottom: 8px; }
-        .form-group input { width: 100%; padding: 10px 14px; border: 1px solid #e8e4dd; border-radius: 4px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
-        .form-group input:focus { outline: none; border-color: #C4422F; box-shadow: 0 0 0 3px rgba(196,66,47,.1); }
-        .save-btn { display: flex; align-items: center; gap: 8px; padding: 12px 24px; background: #C4422F; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
-        .save-btn:hover { opacity: 0.9; }
-        .alert-box { display: flex; align-items: flex-start; gap: 12px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2); border-radius: 4px; padding: 12px; margin-top: 16px; color: #22c55e; }
-      `}</style>
+    <div style={{ padding: '20px', backgroundColor: isDark ? '#0f1419' : '#ffffff', transition: 'all 0.3s ease' }}>
+      <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '20px', color: isDark ? '#fff' : '#000' }}>
+        Site Settings
+      </h2>
 
-      <h1 className="settings-header">Settings</h1>
+      {error && <div style={{ backgroundColor: '#fee', color: '#c33', padding: '12px', borderRadius: '6px', marginBottom: '20px' }}>❌ {error}</div>}
+      {success && <div style={{ backgroundColor: '#eef', color: '#006', padding: '12px', borderRadius: '6px', marginBottom: '20px' }}>✅ {success}</div>}
 
-      <div className="settings-form">
-        <div className="form-group">
-          <label>Site Name</label>
-          <input
-            type="text"
-            value={settings.siteName}
-            onChange={(e) => handleChange('siteName', e.target.value)}
-          />
+      <form onSubmit={handleSubmit} style={{ maxWidth: '600px' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#000', marginBottom: '6px' }}>Site Name</label>
+          <input type="text" name="siteName" value={formData.siteName || ''} onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: isDark ? '1px solid #444' : '1px solid #ddd', borderRadius: '4px', backgroundColor: isDark ? '#1a1f2e' : '#fff', color: isDark ? '#fff' : '#000', boxSizing: 'border-box' }} />
         </div>
 
-        <div className="form-group">
-          <label>Tagline</label>
-          <input
-            type="text"
-            value={settings.tagline}
-            onChange={(e) => handleChange('tagline', e.target.value)}
-          />
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#000', marginBottom: '6px' }}>Tagline</label>
+          <input type="text" name="siteTagline" value={formData.siteTagline || ''} onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: isDark ? '1px solid #444' : '1px solid #ddd', borderRadius: '4px', backgroundColor: isDark ? '#1a1f2e' : '#fff', color: isDark ? '#fff' : '#000', boxSizing: 'border-box' }} />
         </div>
 
-        <div className="form-group">
-          <label>Contact Email</label>
-          <input
-            type="email"
-            value={settings.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-          />
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#000', marginBottom: '6px' }}>From Email</label>
+          <input type="email" name="fromEmail" value={formData.fromEmail || ''} onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: isDark ? '1px solid #444' : '1px solid #ddd', borderRadius: '4px', backgroundColor: isDark ? '#1a1f2e' : '#fff', color: isDark ? '#fff' : '#000', boxSizing: 'border-box' }} />
         </div>
 
-        <div className="form-group">
-          <label>Timezone</label>
-          <input
-            type="text"
-            value={settings.timezone}
-            onChange={(e) => handleChange('timezone', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Language</label>
-          <input
-            type="text"
-            value={settings.language}
-            onChange={(e) => handleChange('language', e.target.value)}
-          />
-        </div>
-
-        <button onClick={handleSave} className="save-btn">
-          <Save size={16} /> Save Settings
+        <button type="submit" style={{ padding: '12px 24px', backgroundColor: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
+          Save Settings
         </button>
-
-        {saved && (
-          <div className="alert-box">
-            <AlertCircle size={16} />
-            Settings saved successfully!
-          </div>
-        )}
-      </div>
+      </form>
     </div>
   );
 };

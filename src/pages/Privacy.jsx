@@ -1,142 +1,51 @@
 import React from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 const Privacy = () => {
+  const { isDark } = useTheme();
+
   return (
-    <div style={{ background: '#FAF9F6', minHeight: '100vh' }}>
-      <style>{`
-        .policy-container {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 60px 18px;
-          box-sizing: border-box;
-        }
-        .policy-header h1 {
-          font-family: "Playfair Display", serif;
-          font-size: 42px;
-          font-weight: 700;
-          color: #071A33;
-          margin: 0 0 16px;
-          line-height: 1.2;
-        }
-        .policy-header p {
-          font-size: 14px;
-          color: #64748B;
-          margin: 0;
-          font-family: "IBM Plex Mono", monospace;
-          letter-spacing: .08em;
-        }
-        .policy-header {
-          padding-bottom: 32px;
-          border-bottom: 1px solid #e8e4dd;
-          margin-bottom: 40px;
-        }
-        .policy-section {
-          margin-bottom: 40px;
-        }
-        .policy-section h2 {
-          font-family: "Playfair Display", serif;
-          font-size: 24px;
-          font-weight: 700;
-          color: #071A33;
-          margin: 0 0 16px;
-          line-height: 1.2;
-        }
-        .policy-section h3 {
-          font-family: "Playfair Display", serif;
-          font-size: 18px;
-          font-weight: 700;
-          color: #071A33;
-          margin: 24px 0 12px;
-        }
-        .policy-section p,
-        .policy-section li {
-          font-size: 15px;
-          color: #17202A;
-          line-height: 1.8;
-          margin: 0 0 12px;
-        }
-        .policy-section ul {
-          margin: 16px 0;
-          padding-left: 24px;
-        }
-        .policy-section li {
-          margin-bottom: 8px;
-        }
-      `}</style>
+    <div style={{ backgroundColor: isDark ? '#0f1419' : '#ffffff', color: isDark ? '#fff' : '#000', minHeight: '100vh', padding: '60px 20px', transition: 'all 0.3s ease' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '36px', fontWeight: 700, marginBottom: '20px' }}>Privacy Policy</h1>
+        <p style={{ fontSize: '13px', color: isDark ? '#999' : '#666', marginBottom: '30px' }}>
+          Last updated: {new Date().toLocaleDateString()}
+        </p>
 
-      <div className="policy-container">
-        <div className="policy-header">
-          <h1>Privacy Policy</h1>
-          <p>Last updated: {new Date().toLocaleDateString()}</p>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>1. Information We Collect</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          We collect information you voluntarily provide, such as when you subscribe to our newsletter, submit contact forms, or create an account. We also collect usage data through analytics to improve our service.
+        </p>
 
-        <div className="policy-section">
-          <h2>Introduction</h2>
-          <p>
-            SYDLINES Media ("we," "us," "our," or "Company") operates the sydlines.media website and related services. 
-            This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you 
-            visit our website.
-          </p>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>2. How We Use Your Information</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          Your information is used to deliver our services, send newsletters, respond to inquiries, and improve user experience. We never sell or share your personal data with third parties without consent.
+        </p>
 
-        <div className="policy-section">
-          <h2>Information We Collect</h2>
-          <h3>Information You Provide</h3>
-          <ul>
-            <li>Name, email address, and other contact details when you subscribe or contact us</li>
-            <li>Profile information if you create an account</li>
-            <li>Comments, messages, and other content you submit</li>
-          </ul>
-          <h3>Information We Collect Automatically</h3>
-          <ul>
-            <li>Device information (browser type, operating system)</li>
-            <li>Usage data (pages visited, time spent, links clicked)</li>
-            <li>IP address and location data</li>
-            <li>Cookies and similar tracking technologies</li>
-          </ul>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>3. Cookies and Tracking</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          We use cookies to enhance your browsing experience. You can control cookie settings in your browser. We also use analytics to understand how readers interact with our content.
+        </p>
 
-        <div className="policy-section">
-          <h2>How We Use Your Information</h2>
-          <p>We use the information we collect to:</p>
-          <ul>
-            <li>Deliver and improve our services</li>
-            <li>Send newsletters and updates you've subscribed to</li>
-            <li>Respond to your inquiries and support requests</li>
-            <li>Analyze usage patterns and improve our website</li>
-            <li>Comply with legal obligations</li>
-          </ul>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>4. Data Security</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          We implement industry-standard security measures to protect your data. However, no online platform is completely secure. We encourage you to use strong passwords and report any security concerns.
+        </p>
 
-        <div className="policy-section">
-          <h2>Data Security</h2>
-          <p>
-            We implement appropriate technical and organizational measures to protect your personal information against 
-            unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the 
-            Internet or electronic storage is completely secure.
-          </p>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>5. Your Rights</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          You have the right to access, modify, or delete your personal data. Contact our support team to exercise these rights or to file a complaint.
+        </p>
 
-        <div className="policy-section">
-          <h2>Your Rights</h2>
-          <p>Depending on your location, you may have the right to:</p>
-          <ul>
-            <li>Access the personal information we hold about you</li>
-            <li>Correct inaccurate or incomplete information</li>
-            <li>Request deletion of your information</li>
-            <li>Unsubscribe from marketing communications</li>
-          </ul>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>6. Changes to This Policy</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          We may update this privacy policy from time to time. We will notify you of any significant changes via email or through a prominent notice on our website.
+        </p>
 
-        <div className="policy-section">
-          <h2>Contact Us</h2>
-          <p>
-            If you have any questions about this Privacy Policy or our data practices, please contact us at{' '}
-            <a href="mailto:privacy@sydlines.com" style={{ color: '#C4422F', textDecoration: 'none', fontWeight: 600 }}>
-              privacy@sydlines.com
-            </a>
-          </p>
-        </div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px', marginTop: '30px' }}>7. Contact Us</h2>
+        <p style={{ fontSize: '15px', lineHeight: 1.8, color: isDark ? '#aaa' : '#666', marginBottom: '16px' }}>
+          If you have questions about our privacy practices, please contact us at privacy@sydlines.media
+        </p>
       </div>
     </div>
   );

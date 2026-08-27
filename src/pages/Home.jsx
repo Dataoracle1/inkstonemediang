@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from '../context/ThemeContext';
 
 const Home = () => {
   const { isDark } = useTheme();

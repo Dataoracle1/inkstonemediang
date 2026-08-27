@@ -1,119 +1,135 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Eye, Search } from 'lucide-react';
-import { postsAPI } from '../utils/api';
+import { useTheme } from '../context/ThemeContext';
+import api from '../api/api';
 
 const StoriesManagement = () => {
+  const { isDark } = useTheme();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [page]);
 
   const fetchPosts = async () => {
     try {
-      setLoading(true);
-      const response = await postsAPI.getAll({ limit: 50 });
-      const data = response.data.data?.posts || response.data.posts || response.data || [];
-      setPosts(data);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    } finally {
-      setLoading(false);
+      setError('');
+      const response = await api.get(`/posts?page=${page}&limit=20&status=published`);
+      setPosts(response.data.data.posts);
+      setTotal(response.data.data.pagination.total);
+    } catch (err) {
+      setError('Failed to load stories');
     }
+    setLoading(false);
   };
 
-  const filteredPosts = posts.filter(post =>
-    post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) return;
+  const deletePost = async (id) => {
+    if (!window.confirm('Delete this story?')) return;
     try {
-      await postsAPI.delete(id);
+      await api.delete(`/posts/${id}`);
       setPosts(posts.filter(p => p._id !== id));
-    } catch (error) {
-      console.error('Error deleting post:', error);
+    } catch (err) {
+      setError('Failed to delete story');
     }
   };
 
   return (
-    <div>
-      <style>{`
-        .stories-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-        .stories-title { font-family: "Playfair Display", serif; font-size: 24px; font-weight: 700; color: #071A33; margin: 0; }
-        .add-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: #C4422F; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; transition: opacity .15s; }
-        .add-btn:hover { opacity: 0.9; }
-        .search-box { margin-bottom: 24px; display: flex; gap: 12px; }
-        .search-input { flex: 1; padding: 10px 14px; border: 1px solid #e8e4dd; border-radius: 4px; font-size: 14px; font-family: inherit; }
-        .stories-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e8e4dd; border-radius: 8px; overflow: hidden; }
-        .stories-table th { background: #F1F3F5; padding: 14px; text-align: left; font-weight: 600; font-size: 12px; font-family: "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: #64748B; border-bottom: 1px solid #e8e4dd; }
-        .stories-table td { padding: 14px; border-bottom: 1px solid #e8e4dd; }
-        .stories-table tr:hover { background: #FAF9F6; }
-        .story-title { font-weight: 600; color: #071A33; }
-        .story-meta { font-size: 12px; color: #64748B; font-family: "IBM Plex Mono", monospace; }
-        .actions { display: flex; gap: 8px; }
-        .action-btn { width: 32px; height: 32px; border: 1px solid #e8e4dd; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #071A33; transition: all .15s; }
-        .action-btn:hover { background: #C4422F; color: white; border-color: #C4422F; }
-      `}</style>
+    <div style={{ padding: '20px', backgroundColor: isDark ? '#0f1419' : '#ffffff', transition: 'all 0.3s ease' }}>
+      <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '20px', color: isDark ? '#fff' : '#000' }}>
+        Stories Management
+      </h2>
 
-      <div className="stories-header">
-        <h1 className="stories-title">Stories Management</h1>
-        <button className="add-btn">
-          <Plus size={16} /> Add New Story
-        </button>
-      </div>
-
-      <div className="search-box">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search stories..."
-          className="search-input"
-        />
-      </div>
+      {error && (
+        <div style={{ backgroundColor: '#fee', color: '#c33', padding: '12px', borderRadius: '6px', marginBottom: '20px' }}>
+          ❌ {error}
+        </div>
+      )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>Loading stories...</div>
-      ) : filteredPosts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>No stories found</div>
+        <div style={{ textAlign: 'center', color: isDark ? '#999' : '#666' }}>Loading...</div>
+      ) : posts.length === 0 ? (
+        <div style={{ textAlign: 'center', color: isDark ? '#999' : '#666', padding: '40px' }}>
+          No stories published yet
+        </div>
       ) : (
-        <table className="stories-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Views</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPosts.map((post) => (
-              <tr key={post._id}>
-                <td>
-                  <div className="story-title">{post.title}</div>
-                  <div className="story-meta">{post.slug}</div>
-                </td>
-                <td>{post.category}</td>
-                <td>{post.views || 0}</td>
-                <td><span style={{ background: '#e8f5e9', color: '#22c55e', padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>Published</span></td>
-                <td className="story-meta">{new Date(post.createdAt).toLocaleDateString()}</td>
-                <td>
-                  <div className="actions">
-                    <button className="action-btn" title="View"><Eye size={16} /></button>
-                    <button className="action-btn" title="Edit"><Edit2 size={16} /></button>
-                    <button className="action-btn" onClick={() => handleDelete(post._id)} title="Delete"><Trash2 size={16} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: isDark ? '1px solid #333' : '1px solid #ddd' }}>
+                  <th style={{ textAlign: 'left', padding: '12px', color: isDark ? '#999' : '#666', fontWeight: 600 }}>Title</th>
+                  <th style={{ textAlign: 'left', padding: '12px', color: isDark ? '#999' : '#666', fontWeight: 600 }}>Category</th>
+                  <th style={{ textAlign: 'left', padding: '12px', color: isDark ? '#999' : '#666', fontWeight: 600 }}>Views</th>
+                  <th style={{ textAlign: 'center', padding: '12px', color: isDark ? '#999' : '#666', fontWeight: 600 }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {posts.map((post) => (
+                  <tr key={post._id} style={{ borderBottom: isDark ? '1px solid #333' : '1px solid #ddd' }}>
+                    <td style={{ padding: '12px', color: isDark ? '#aaa' : '#666' }}>{post.title.substring(0, 50)}...</td>
+                    <td style={{ padding: '12px', color: isDark ? '#aaa' : '#666' }}>{post.category}</td>
+                    <td style={{ padding: '12px', color: isDark ? '#aaa' : '#666' }}>{post.views}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <button
+                        onClick={() => deletePost(post._id)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#d32f2f',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: page === 1 ? '#ccc' : '#d32f2f',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Previous
+            </button>
+            <span style={{ padding: '8px 16px', color: isDark ? '#fff' : '#000' }}>
+              Page {page} of {Math.ceil(total / 20)}
+            </span>
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={page * 20 >= total}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: page * 20 >= total ? '#ccc' : '#d32f2f',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: page * 20 >= total ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
