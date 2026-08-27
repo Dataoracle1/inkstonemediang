@@ -1,317 +1,347 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Search, Bell } from 'lucide-react';
-import { useTheme, ThemeToggleButton } from '../context/ThemeContext';
-import { postsAPI } from '../utils/api';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
-  const { isDark } = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [trending, setTrending] = useState([]);
-  const [currentTrendIndex, setCurrentTrendIndex] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchTrending();
-  }, []);
-
-  useEffect(() => {
-    if (trending.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrentTrendIndex((prev) => (prev + 1) % trending.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [trending]);
-
-  const fetchTrending = async () => {
-    try {
-      const response = await postsAPI.getAll?.({ category: 'Breaking News', limit: 5 });
-      const posts = response?.data?.data?.posts || response?.data?.posts || [];
-      setTrending(posts);
-    } catch (error) {
-      console.error('Error fetching trending posts:', error);
-    }
-  };
-
-  const trendingPost = trending[currentTrendIndex];
+  const navItems = [
+    { label: 'Breaking News', path: '/category/breaking-news' },
+    { label: 'Sports', path: '/category/sports' },
+    { label: 'Entertainment', path: '/category/entertainment' },
+    { label: 'Technology', path: '/category/technology' },
+    { label: 'Politics', path: '/category/politics' },
+    { label: 'Business', path: '/category/business' },
+    { label: 'World', path: '/category/world' },
+    { label: 'Opinion', path: '/category/opinion' },
+    { label: 'Contact', path: '/contact' },
+  ];
 
   return (
-    <nav style={{
-      background: isDark ? '#0D1117' : '#071A33',
-      color: isDark ? '#E8E4DD' : '#FFFFFF',
-      transition: 'all 0.3s ease',
-    }}>
-      <style>{`
-        .navbar-utility-bar {
-          background: ${isDark ? '#0F1117' : '#071A33'};
-          border-bottom: 1px solid ${isDark ? '#30363D' : '#C4422F'};
-          padding: 12px 40px;
-          font-size: 12px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 20px;
-        }
+    <nav
+      style={{
+        backgroundColor: isDark ? '#0f1419' : '#ffffff',
+        borderBottom: isDark ? '1px solid #333' : '1px solid #e0e0e0',
+        transition: 'all 0.3s ease',
+      }}
+    >
+      {/* Top Bar - Date, Trending, Follow, Theme Toggle */}
+      <div
+        style={{
+          backgroundColor: isDark ? '#1a1f2e' : '#f5f5f5',
+          padding: '8px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '12px',
+          borderBottom: isDark ? '1px solid #333' : '1px solid #e0e0e0',
+        }}
+      >
+        <span style={{ color: isDark ? '#999' : '#666' }}>
+          {new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </span>
 
-        .utility-left {
-          display: flex;
-          gap: 20px;
-          align-items: center;
-        }
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                backgroundColor: '#d32f2f',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '3px',
+                fontWeight: 600,
+                fontSize: '10px',
+              }}
+            >
+              🔴 Trending:
+            </span>
+            <span style={{ color: isDark ? '#aaa' : '#666', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Nigerians will soon be able to buy shares in refinery – Dangote
+            </span>
+          </div>
 
-        .utility-date {
-          color: ${isDark ? '#8B949E' : 'rgba(255,255,255,0.7)'};
-          font-family: "IBM Plex Mono", monospace;
-        }
-
-        .trending-headline {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: ${isDark ? '#C9D1D9' : '#FFFFFF'};
-          font-weight: 600;
-          max-width: 400px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .trending-badge {
-          background: #C4422F;
-          color: white;
-          padding: 2px 6px;
-          border-radius: 3px;
-          font-size: 10px;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-
-        .utility-right {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-        }
-
-        .social-links {
-          display: flex;
-          gap: 8px;
-        }
-
-        .social-link {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 4px;
-          border: 1px solid ${isDark ? '#30363D' : 'rgba(255,255,255,0.2)'};
-          color: ${isDark ? '#C9D1D9' : '#FFFFFF'};
-          text-decoration: none;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        }
-
-        .social-link:hover {
-          background: rgba(196, 66, 47, 0.2);
-          border-color: #C4422F;
-          color: #C4422F;
-        }
-
-        .navbar-branding {
-          padding: 20px 40px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: ${isDark ? '#0D1117' : '#071A33'};
-        }
-
-        .navbar-logo {
-          font-family: "Playfair Display", serif;
-          font-size: 28px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .logo-syd {
-          color: ${isDark ? '#E8E4DD' : '#FAF9F6'};
-        }
-
-        .logo-lines {
-          color: #C4422F;
-          font-style: italic;
-        }
-
-        .navbar-tagline {
-          font-size: 11px;
-          color: ${isDark ? '#8B949E' : 'rgba(255,255,255,0.6)'};
-          font-family: "IBM Plex Mono", monospace;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          margin-left: 8px;
-        }
-
-        .navbar-controls {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-        }
-
-        .navbar-main {
-          background: ${isDark ? '#0D1117' : '#071A33'};
-          border-top: 1px solid ${isDark ? '#30363D' : '#C4422F'};
-          border-bottom: 1px solid ${isDark ? '#30363D' : '#C4422F'};
-          padding: 0 40px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          height: 50px;
-        }
-
-        .navbar-links {
-          display: flex;
-          gap: 0;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-        }
-
-        .navbar-link {
-          padding: 0 18px;
-          height: 50px;
-          display: flex;
-          align-items: center;
-          color: ${isDark ? '#C9D1D9' : '#FFFFFF'};
-          text-decoration: none;
-          font-size: 13px;
-          font-weight: 500;
-          border-right: 1px solid ${isDark ? '#30363D' : 'rgba(255,255,255,0.1)'};
-          transition: all 0.2s ease;
-          cursor: pointer;
-        }
-
-        .navbar-link:hover {
-          background: rgba(196, 66, 47, 0.1);
-          color: #C4422F;
-        }
-
-        .navbar-link.active {
-          background: rgba(196, 66, 47, 0.15);
-          color: #C4422F;
-          border-bottom: 2px solid #C4422F;
-        }
-
-        .menu-toggle {
-          display: none;
-          background: none;
-          border: none;
-          color: ${isDark ? '#C9D1D9' : '#FFFFFF'};
-          cursor: pointer;
-          padding: 8px;
-        }
-
-        @media (max-width: 768px) {
-          .navbar-utility-bar {
-            padding: 12px 20px;
-          }
-
-          .navbar-branding {
-            padding: 12px 20px;
-          }
-
-          .navbar-main {
-            padding: 0 20px;
-          }
-
-          .navbar-links {
-            display: none;
-          }
-
-          .navbar-links.active {
-            display: flex;
-            flex-direction: column;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: ${isDark ? '#161B22' : '#071A33'};
-            border-bottom: 1px solid ${isDark ? '#30363D' : '#C4422F'};
-            z-index: 999;
-          }
-
-          .navbar-link {
-            border: none;
-            border-bottom: 1px solid ${isDark ? '#30363D' : 'rgba(255,255,255,0.1)'};
-            width: 100%;
-            padding: 0 20px;
-          }
-
-          .menu-toggle {
-            display: block;
-          }
-
-          .trending-headline {
-            display: none;
-          }
-        }
-      `}</style>
-
-      {/* Utility Bar */}
-      <div className="navbar-utility-bar">
-        <div className="utility-left">
-          <span className="utility-date">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </span>
-          {trendingPost && (
-            <div className="trending-headline">
-              <span className="trending-badge">🔥 TRENDING</span>
-              <span>{trendingPost.title}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ color: isDark ? '#999' : '#666' }}>Follow us:</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {['facebook', 'twitter', 'instagram', 'youtube'].map((social) => (
+                <a
+                  key={social}
+                  href="#"
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isDark ? '#999' : '#666',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {social[0].toUpperCase()}
+                </a>
+              ))}
             </div>
-          )}
-        </div>
-        <div className="utility-right">
-          <div className="social-links">
-            <a href="https://facebook.com" className="social-link" title="Facebook">f</a>
-            <a href="https://twitter.com" className="social-link" title="Twitter">𝕏</a>
-            <a href="https://instagram.com" className="social-link" title="Instagram">📷</a>
           </div>
-          <ThemeToggleButton />
-          <a href="/admin/login" className="social-link" title="Admin">⚙️</a>
+
+          <button
+            onClick={toggleTheme}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              color: isDark ? '#ffd700' : '#333',
+              fontSize: '12px',
+            }}
+          >
+            {isDark ? <Moon size={14} /> : <Sun size={14} />}
+            {isDark ? 'Dark Mode' : 'Light Mode'}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: isDark ? '#999' : '#666' }}>
+            <div
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: isDark ? '#444' : '#ddd',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: 'bold',
+              }}
+            >
+              YK
+            </div>
+            <span style={{ fontSize: '11px' }}>Yakubu Kamaldeen</span>
+          </div>
         </div>
       </div>
 
-      {/* Branding */}
-      <div className="navbar-branding">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="navbar-logo">
-            <span className="logo-syd">SYD</span>
-            <span className="logo-lines">LINES.</span>
-          </div>
-          <div className="navbar-tagline">Smart News. Real Impact.</div>
-        </div>
-        <div className="navbar-controls">
-          <button style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 20 }}>🔔</button>
-        </div>
-      </div>
-
-      {/* Main Navigation */}
-      <div className="navbar-main">
-        <ul className={`navbar-links ${isMenuOpen ? 'active' : ''}`}>
-          <a href="/" className="navbar-link active">Home</a>
-          <a href="/?category=Breaking%20News" className="navbar-link">Breaking News</a>
-          <a href="/?category=Business" className="navbar-link">Business</a>
-          <a href="/?category=Technology" className="navbar-link">Technology</a>
-          <a href="/?category=Sports" className="navbar-link">Sports</a>
-          <a href="/?category=Entertainment" className="navbar-link">Entertainment</a>
-        </ul>
-        <button 
-          className="menu-toggle" 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Toggle menu"
+      {/* Logo & Newsletter Section */}
+      <div
+        style={{
+          padding: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: isDark ? '#0f1419' : '#ffffff',
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            textDecoration: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
         >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+          <div style={{ fontSize: '36px', fontWeight: 700, color: isDark ? '#fff' : '#000' }}>
+            <span style={{ color: isDark ? '#fff' : '#000' }}>SYDLINES</span>
+            <span style={{ color: '#d32f2f', fontStyle: 'italic' }}>.</span>
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              letterSpacing: '3px',
+              fontWeight: 600,
+              color: isDark ? '#999' : '#666',
+            }}
+          >
+            SMART NEWS. REAL IMPACT.
+          </div>
+        </Link>
+
+        {/* Newsletter Signup */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            backgroundColor: isDark ? '#1a1f2e' : '#f9f9f9',
+            padding: '16px 20px',
+            borderRadius: '4px',
+          }}
+        >
+          <div style={{ fontSize: '14px', fontWeight: 600, color: isDark ? '#fff' : '#000' }}>
+            ✉️ Stay informed, daily.
+          </div>
+          <div style={{ fontSize: '12px', color: isDark ? '#999' : '#666' }}>
+            Top stories, handpicked for you.
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <input
+              type="email"
+              placeholder="Your email address"
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                border: isDark ? '1px solid #444' : '1px solid #ddd',
+                borderRadius: '3px',
+                fontSize: '12px',
+                backgroundColor: isDark ? '#2a2f3e' : '#fff',
+                color: isDark ? '#fff' : '#000',
+              }}
+            />
+            <button
+              style={{
+                backgroundColor: '#d32f2f',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '12px',
+              }}
+            >
+              Subscribe
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Main Navigation Bar */}
+      <div
+        style={{
+          backgroundColor: '#1a2a4a',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 20px',
+          gap: '30px',
+          height: '56px',
+        }}
+      >
+        {/* Home Icon */}
+        <Link
+          to="/"
+          style={{
+            backgroundColor: '#d32f2f',
+            color: 'white',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textDecoration: 'none',
+            borderRadius: '4px',
+            fontSize: '20px',
+          }}
+        >
+          🏠
+        </Link>
+
+        {/* Desktop Menu */}
+        <div style={{ display: 'flex', gap: '30px', flex: 1 }}>
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                color: 'white',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.target.style.color = '#d32f2f')}
+              onMouseLeave={(e) => (e.target.style.color = 'white')}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Right Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
+          <button
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '18px',
+            }}
+          >
+            🔍
+          </button>
+
+          <button
+            style={{
+              backgroundColor: '#d32f2f',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            ✉️ Subscribe
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'none',
+              '@media (max-width: 768px)': { display: 'block' },
+            }}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            backgroundColor: '#1a2a4a',
+            padding: '12px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                color: 'white',
+                textDecoration: 'none',
+                fontSize: '14px',
+                padding: '8px 0',
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 };
